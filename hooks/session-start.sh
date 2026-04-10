@@ -14,10 +14,10 @@ INPUT=$(cat)
 # Extract session info
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 CWD=$(echo "$INPUT" | jq -r '.cwd // "unknown"')
-TRIGGER=$(echo "$INPUT" | jq -r '.trigger // "startup"')
+TRIGGER=$(echo "$INPUT" | jq -r '.source // "startup"')
 
 # Find task file by CWD
-TASK_FILE=$(find_task_by_cwd "$CWD")
+TASK_FILE=$(find_task_by_cwd "$CWD") || true
 TASK_ID=""
 
 if [ -n "$TASK_FILE" ] && [ -f "$TASK_FILE" ]; then
@@ -25,8 +25,8 @@ if [ -n "$TASK_FILE" ] && [ -f "$TASK_FILE" ]; then
     PROMPT=$(jq -r '.prompt // ""' "$TASK_FILE" | head -c 100)
     
     # Update task with session ID
-    jq --arg sid "$SESSION_ID" --arg status "running" \
-       '.session_id = $sid | .status = $status | .started_at = now' \
+    jq --arg sid "$SESSION_ID" --arg status "running" --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+       '.session_id = $sid | .status = $status | .started_at = $ts' \
        "$TASK_FILE" > "${TASK_FILE}.tmp" && mv "${TASK_FILE}.tmp" "$TASK_FILE"
     
     # Initialize tracking
@@ -43,7 +43,7 @@ if [ -n "$TASK_FILE" ] && [ -f "$TASK_FILE" ]; then
 ━━━━━━━━━━━━━━━━━━━━━"
 
     # Write event for OpenClaw
-    EVENT_FILE="$BRIDGE_DIR/events/$(date +%s%N)-session-start.json"
+    EVENT_FILE="$BRIDGE_DIR/events/$(portable_timestamp)-session-start.json"
     cat > "$EVENT_FILE" << EOF
 {
     "event": "session_start",

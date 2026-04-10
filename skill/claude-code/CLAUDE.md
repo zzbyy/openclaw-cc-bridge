@@ -136,12 +136,14 @@ Control which notifications you receive:
 
 When you receive wake events from Claude Code hooks:
 
-- `[CC] Task xxx started` → Acknowledge silently (already notified on dispatch)
-- `[CC] Response complete` → Notify user: "Claude Code completed a step"
-- `[CC] Session ended (exit)` → Notify: "✅ Task [id] completed successfully"
-- `[CC] Session ended (error)` → Notify: "⚠️ Task [id] ended with error"
-- `[CC-QUESTION]` → Forward question to user (see above)
-- `[CC] Question xxx timed out` → Notify: "⏰ Question timed out, task may be stuck"
+- `[CC-START] <task-id>` → Acknowledge silently (already notified on dispatch)
+- `[CC-PROGRESS] [<task-id>] ...` → Forward progress update to user
+- `[CC-COMPLETE] <task-id> ...` → Send completion summary to user
+- `[CC-ERROR] [<task-id>] ...` → Notify: "⚠️ Error in task"
+- `[CC-QUESTION] <question-id> task:<task-id>` → Forward question to user (see above)
+- `[CC-TIMEOUT] [<task-id>] ...` → Notify: "⏰ Question timed out, task may be stuck"
+- `[CC-IDLE] ...` → Notify: "⏸️ Waiting for input"
+- `[CC-PERMISSION] ...` → Notify: "🔐 Permission needed"
 
 ## Quick Reference
 

@@ -89,24 +89,34 @@ show_config() {
 set_config() {
     local key="$1"
     local value="$2"
-    
+
     init_config
-    
+
+    # Validate key against whitelist to prevent jq injection
+    case "$key" in
+        notifications.start|notifications.progress|notifications.question|\
+        notifications.complete|notifications.error|\
+        progress_filter.file_created|progress_filter.package_install|\
+        progress_filter.tests|progress_filter.git|progress_filter.subagent|\
+        progress_filter.milestone_interval) ;;
+        *) echo "Unknown config key: $key" >&2; exit 1 ;;
+    esac
+
     # Convert on/off to true/false
     case "$value" in
         on|yes|1) value="true" ;;
         off|no|0) value="false" ;;
     esac
-    
-    # Check if value is a number
+
+    # Use --arg/--argjson for safe value passing
     if [[ "$value" =~ ^[0-9]+$ ]]; then
-        jq ".$key = $value" "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+        jq --argjson v "$value" ".$key = \$v" "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
     elif [ "$value" = "true" ] || [ "$value" = "false" ]; then
-        jq ".$key = $value" "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+        jq --argjson v "$value" ".$key = \$v" "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
     else
-        jq ".$key = \"$value\"" "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
+        jq --arg v "$value" ".$key = \$v" "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
     fi
-    
+
     echo "✅ Set $key = $value"
 }
 
@@ -134,21 +144,21 @@ reset_config() {
 # Quick presets
 preset_quiet() {
     init_config
-    jq '.notifications.start = false | .notifications.progress = false | .notifications.complete = true | .notifications.error = true' \
+    jq '.notifications.start = false | .notifications.progress = false | .notifications.question = true | .notifications.complete = true | .notifications.error = true' \
         "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
     echo "🔇 Quiet mode: Only completion and errors"
 }
 
 preset_minimal() {
     init_config
-    jq '.notifications.start = true | .notifications.progress = false | .notifications.complete = true | .notifications.error = true' \
+    jq '.notifications.start = true | .notifications.progress = false | .notifications.question = true | .notifications.complete = true | .notifications.error = true' \
         "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
     echo "📝 Minimal mode: Start, completion, and errors only"
 }
 
 preset_verbose() {
     init_config
-    jq '.notifications.start = true | .notifications.progress = true | .notifications.complete = true | .notifications.error = true | .progress_filter.file_created = true | .progress_filter.package_install = true | .progress_filter.tests = true | .progress_filter.git = true | .progress_filter.subagent = true' \
+    jq '.notifications.start = true | .notifications.progress = true | .notifications.question = true | .notifications.complete = true | .notifications.error = true | .progress_filter.file_created = true | .progress_filter.package_install = true | .progress_filter.tests = true | .progress_filter.git = true | .progress_filter.subagent = true' \
         "$CONFIG_FILE" > "${CONFIG_FILE}.tmp" && mv "${CONFIG_FILE}.tmp" "$CONFIG_FILE"
     echo "📢 Verbose mode: All notifications enabled"
 }

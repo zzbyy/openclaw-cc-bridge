@@ -42,10 +42,11 @@ EOF
 get_config() {
     local key="$1"
     local default="${2:-true}"
-    
+
     [ ! -f "$CONFIG_FILE" ] && echo "$default" && return
-    
-    local value=$(jq -r ".$key // \"$default\"" "$CONFIG_FILE" 2>/dev/null)
+
+    # Use explicit null check — jq's // operator treats false as falsy
+    local value=$(jq -r "if .$key == null then \"$default\" else .$key end" "$CONFIG_FILE" 2>/dev/null)
     [ "$value" = "null" ] && echo "$default" || echo "$value"
 }
 
@@ -65,8 +66,6 @@ is_progress_enabled() {
     local value=$(get_config "progress_filter.$subtype" "true")
     [ "$value" = "true" ]
 }
-export TELEGRAM_GROUP="${CC_TELEGRAM_GROUP:-}"
-
 # Get target from task file (group + optional topic)
 get_task_target() {
     local task_id="$1"
@@ -92,7 +91,7 @@ mkdir -p "$BRIDGE_DIR"/{tasks,questions,answers,events,logs,completed,tracking}
 # Find task by session ID
 find_task_by_session() {
     local session_id="$1"
-    for f in "$BRIDGE_DIR/tasks"/*.json 2>/dev/null; do
+    for f in "$BRIDGE_DIR/tasks"/*.json; do
         [ -f "$f" ] || continue
         if [ "$(jq -r '.session_id' "$f" 2>/dev/null)" = "$session_id" ]; then
             echo "$f"
@@ -105,13 +104,14 @@ find_task_by_session() {
 # Find task by CWD (for session start before session_id is known)
 find_task_by_cwd() {
     local cwd="$1"
-    find "$BRIDGE_DIR/tasks" -name "*.json" -mmin -10 2>/dev/null | while read f; do
+    while IFS= read -r f; do
         if [ "$(jq -r '.cwd' "$f" 2>/dev/null)" = "$cwd" ] && \
            [ "$(jq -r '.status' "$f" 2>/dev/null)" = "pending" ]; then
             echo "$f"
             return 0
         fi
-    done
+    done < <(find "$BRIDGE_DIR/tasks" -name "*.json" -mmin -10 2>/dev/null)
+    return 1
 }
 
 # Get task ID from file path
@@ -251,6 +251,15 @@ get_tracking_summary() {
     [ -f "$tracking_file" ] && cat "$tracking_file"
 }
 
+# Portable high-resolution timestamp for unique filenames (macOS lacks %N)
+portable_timestamp() {
+    if python3 -c '' 2>/dev/null; then
+        python3 -c 'import time; print(int(time.time()*1e9))'
+    else
+        echo "$(date +%s)$$${RANDOM:-0}"
+    fi
+}
+
 # Format duration from seconds
 format_duration() {
     local seconds=$1
@@ -272,15 +281,25 @@ format_duration() {
 extract_transcript_summary() {
     local transcript_path="$1"
     local max_chars="${2:-500}"
-    
+
     [ -f "$transcript_path" ] || return
-    
+
+    # Portable reverse: tail -r (macOS) or tac (Linux)
+    local reversed
+    if command -v tac &>/dev/null; then
+        reversed=$(tac "$transcript_path" 2>/dev/null)
+    elif tail -r /dev/null 2>/dev/null; then
+        reversed=$(tail -r "$transcript_path" 2>/dev/null)
+    else
+        reversed=$(awk '{a[NR]=$0} END{for(i=NR;i>=1;i--)print a[i]}' "$transcript_path" 2>/dev/null)
+    fi
+
     # Get last assistant message content
-    tac "$transcript_path" 2>/dev/null | while IFS= read -r line; do
+    echo "$reversed" | while IFS= read -r line; do
         local msg_type=$(echo "$line" | jq -r '.type // empty' 2>/dev/null)
         if [ "$msg_type" = "assistant" ]; then
             echo "$line" | jq -r '.message.content[]? | select(.type=="text") | .text' 2>/dev/null | head -c "$max_chars"
-            return 0
+            break
         fi
     done
 }

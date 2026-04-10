@@ -55,14 +55,17 @@ if [ -f "$CLAUDE_SETTINGS" ]; then
     cp "$CLAUDE_SETTINGS" "${CLAUDE_SETTINGS}.backup.$(date +%s)"
     success "Backed up existing settings"
     
-    # Merge hooks
-    EXISTING_HOOKS=$(jq '.hooks // {}' "$CLAUDE_SETTINGS")
+    # Merge hooks — append to existing arrays instead of replacing them
     NEW_HOOKS=$(jq '.hooks' "$SCRIPT_DIR/claude-settings.json")
-    MERGED_HOOKS=$(echo "$EXISTING_HOOKS $NEW_HOOKS" | jq -s '.[0] * .[1]')
-    
-    jq --argjson hooks "$MERGED_HOOKS" '.hooks = $hooks' "$CLAUDE_SETTINGS" > "${CLAUDE_SETTINGS}.tmp"
+    jq --argjson new "$NEW_HOOKS" '
+        .hooks as $existing |
+        reduce ($new | keys[]) as $event (
+            .;
+            .hooks[$event] = (($existing[$event] // []) + $new[$event])
+        )
+    ' "$CLAUDE_SETTINGS" > "${CLAUDE_SETTINGS}.tmp"
     mv "${CLAUDE_SETTINGS}.tmp" "$CLAUDE_SETTINGS"
-    success "Merged hooks into existing settings"
+    success "Merged hooks into existing settings (appended, not replaced)"
 else
     cp "$SCRIPT_DIR/claude-settings.json" "$CLAUDE_SETTINGS"
     success "Created new settings.json"

@@ -11,7 +11,7 @@ INPUT=$(cat)
 # Extract info
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 MESSAGE=$(echo "$INPUT" | jq -r '.message // ""')
-NOTIFICATION_TYPE=$(echo "$INPUT" | jq -r '.type // "unknown"')
+NOTIFICATION_TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
 
 # Find task
 TASK_FILE=$(find_task_by_session "$SESSION_ID")
@@ -35,7 +35,7 @@ case "$NOTIFICATION_TYPE" in
 esac
 
 # Write event
-EVENT_FILE="$BRIDGE_DIR/events/$(date +%s%N)-notification.json"
+EVENT_FILE="$BRIDGE_DIR/events/$(portable_timestamp)-notification.json"
 cat > "$EVENT_FILE" << EOF
 {
     "event": "notification",

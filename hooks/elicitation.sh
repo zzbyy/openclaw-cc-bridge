@@ -5,8 +5,8 @@
 set -e
 source "$(dirname "$0")/hook-utils.sh"
 
-# Configuration
-MAX_WAIT_SECONDS=${CC_ELICITATION_TIMEOUT:-300}  # 5 minutes default
+# Configuration — internal timeout must be shorter than hook timeout (300s) for clean handling
+MAX_WAIT_SECONDS=${CC_ELICITATION_TIMEOUT:-270}  # 4.5 minutes default (hook timeout is 300s)
 POLL_INTERVAL=2
 
 # Read input from stdin
@@ -63,7 +63,7 @@ Reply: /answer $ELICITATION_ID <your answer>
 Or reply directly to this message"
 
 # Write event for OpenClaw
-EVENT_FILE="$BRIDGE_DIR/events/$(date +%s%N)-question.json"
+EVENT_FILE="$BRIDGE_DIR/events/$(portable_timestamp)-question.json"
 cat > "$EVENT_FILE" << EOF
 {
     "event": "question",
@@ -105,14 +105,14 @@ while [ $WAITED -lt $MAX_WAIT_SECONDS ]; do
             # Clean up
             rm -f "$QUESTION_FILE" "$ANSWER_FILE"
             
-            # Return answer to Claude Code
-            echo "{\"response\": $(echo "$ANSWER_TEXT" | jq -Rs .)}"
+            # Return answer to Claude Code (hookSpecificOutput envelope)
+            echo "{\"hookSpecificOutput\": {\"hookEventName\": \"Elicitation\", \"action\": \"accept\", \"content\": {\"answer\": $(echo "$ANSWER_TEXT" | jq -Rs .)}}}"
             exit 0
-            
+
         elif [ "$ANSWER_STATUS" = "skipped" ] || [ "$ANSWER_STATUS" = "cancelled" ]; then
             log_hook "Elicitation skipped: id=$ELICITATION_ID"
             rm -f "$QUESTION_FILE" "$ANSWER_FILE"
-            echo '{"response": null, "skipped": true}'
+            echo '{"hookSpecificOutput": {"hookEventName": "Elicitation", "action": "decline"}}'
             exit 0
         fi
     fi
@@ -132,5 +132,5 @@ jq '.status = "timeout"' "$QUESTION_FILE" > "${QUESTION_FILE}.tmp" \
 
 send_wake "[CC-TIMEOUT] [$TASK_ID] ⏰ Question timed out" "now" "$TASK_ID"
 
-echo "{\"response\": null, \"timeout\": true, \"error\": \"No response within ${MAX_WAIT_SECONDS}s\"}"
+echo '{"hookSpecificOutput": {"hookEventName": "Elicitation", "action": "decline"}}'
 exit 0

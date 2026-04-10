@@ -61,10 +61,13 @@ if [ -z "$PROMPT" ]; then
     exit 1
 fi
 
-# Expand ~ and resolve path
-WORKDIR=$(eval echo "$WORKDIR")
+# Safe tilde expansion (no eval)
+case "$WORKDIR" in
+    ~/*) WORKDIR="$HOME/${WORKDIR#\~/}" ;;
+    ~)   WORKDIR="$HOME" ;;
+esac
 if [ ! -d "$WORKDIR" ]; then
-    echo "{\"error\": \"Directory does not exist: $WORKDIR\"}" >&2
+    jq -n --arg msg "Directory does not exist: $WORKDIR" '{"error": $msg}' >&2
     exit 1
 fi
 WORKDIR=$(cd "$WORKDIR" && pwd)
@@ -76,59 +79,67 @@ mkdir -p "$BRIDGE_DIR/tasks" "$BRIDGE_DIR/logs"
 # Generate task ID
 TASK_ID="task-$(date +%s)-$(openssl rand -hex 4)"
 
-# Create task file
+# Create task file (use jq for safe JSON construction)
 TASK_FILE="$BRIDGE_DIR/tasks/${TASK_ID}.json"
-cat > "$TASK_FILE" << EOF
-{
-    "task_id": "$TASK_ID",
-    "prompt": $(echo "$PROMPT" | jq -Rs .),
-    "cwd": "$WORKDIR",
-    "options": {
-        "agent_teams": $AGENT_TEAMS,
-        "model": "$MODEL",
-        "timeout_minutes": $TIMEOUT_MINUTES
-    },
-    "target_channel": "${CC_TELEGRAM_GROUP:-}",
-    "target_topic": "${TOPIC:-}",
-    "status": "pending",
-    "created_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-}
-EOF
-
-# Build Claude Code command
-CC_CMD="claude --dangerously-skip-permissions"
-
-if [ "$AGENT_TEAMS" = true ]; then
-    CC_CMD="$CC_CMD --teammate-mode auto"
-fi
-
-CC_CMD="$CC_CMD --model $MODEL"
-CC_CMD="$CC_CMD -p \"$PROMPT\""
-CC_CMD="$CC_CMD --output-format stream-json"
+jq -n \
+    --arg tid "$TASK_ID" \
+    --arg prompt "$PROMPT" \
+    --arg cwd "$WORKDIR" \
+    --argjson agent_teams "$AGENT_TEAMS" \
+    --arg model "$MODEL" \
+    --argjson timeout "$TIMEOUT_MINUTES" \
+    --arg channel "${CC_TELEGRAM_GROUP:-}" \
+    --arg topic "${TOPIC:-}" \
+    --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+    '{
+        task_id: $tid,
+        prompt: $prompt,
+        cwd: $cwd,
+        options: { agent_teams: $agent_teams, model: $model, timeout_minutes: $timeout },
+        target_channel: $channel,
+        target_topic: $topic,
+        status: "pending",
+        created_at: $ts
+    }' > "$TASK_FILE"
 
 # Log file
 LOG_FILE="$BRIDGE_DIR/logs/${TASK_ID}.log"
 
-# Spawn in background
+# Spawn in background using exported env vars (avoids shell injection)
+export CC_TASK_PROMPT="$PROMPT"
+export CC_TASK_MODEL="$MODEL"
+export CC_TASK_AGENT_TEAMS="$AGENT_TEAMS"
+export CC_TASK_LOG_FILE="$LOG_FILE"
+export CC_TASK_ID="$TASK_ID"
+export CC_TASK_BRIDGE_DIR="$BRIDGE_DIR"
+export CC_TASK_GATEWAY_URL="${OPENCLAW_GATEWAY_URL:-http://127.0.0.1:18789}"
+export CC_TASK_GATEWAY_TOKEN="${OPENCLAW_GATEWAY_TOKEN:-}"
+
 cd "$WORKDIR"
-nohup bash -c "
-    export CC_BRIDGE_DIR=\"$BRIDGE_DIR\"
-    export OPENCLAW_GATEWAY_URL=\"${OPENCLAW_GATEWAY_URL:-http://127.0.0.1:18789}\"
-    export OPENCLAW_GATEWAY_TOKEN=\"${OPENCLAW_GATEWAY_TOKEN:-}\"
-    
-    # Run Claude Code
-    $CC_CMD 2>&1 | tee \"$LOG_FILE\"
-    
-    # Capture exit code
-    EXIT_CODE=\${PIPESTATUS[0]}
-    
-    # Update task with exit code
-    if [ -f \"$BRIDGE_DIR/tasks/${TASK_ID}.json\" ]; then
-        jq --arg ec \"\$EXIT_CODE\" '.exit_code = (\$ec | tonumber)' \
-            \"$BRIDGE_DIR/tasks/${TASK_ID}.json\" > \"$BRIDGE_DIR/tasks/${TASK_ID}.json.tmp\" \
-            && mv \"$BRIDGE_DIR/tasks/${TASK_ID}.json.tmp\" \"$BRIDGE_DIR/tasks/${TASK_ID}.json\"
+nohup bash -c '
+    export CC_BRIDGE_DIR="$CC_TASK_BRIDGE_DIR"
+    export OPENCLAW_GATEWAY_URL="$CC_TASK_GATEWAY_URL"
+    export OPENCLAW_GATEWAY_TOKEN="$CC_TASK_GATEWAY_TOKEN"
+
+    # Build command as array (safe from injection)
+    CC_CMD=(claude --dangerously-skip-permissions)
+    if [ "$CC_TASK_AGENT_TEAMS" = "true" ]; then
+        CC_CMD+=(--teammate-mode auto)
     fi
-" > /dev/null 2>&1 &
+    CC_CMD+=(--model "$CC_TASK_MODEL" -p "$CC_TASK_PROMPT" --output-format stream-json)
+
+    # Run Claude Code
+    "${CC_CMD[@]}" 2>&1 | tee "$CC_TASK_LOG_FILE"
+    EXIT_CODE=${PIPESTATUS[0]}
+
+    # Update task with exit code
+    TASK_JSON="$CC_TASK_BRIDGE_DIR/tasks/${CC_TASK_ID}.json"
+    if [ -f "$TASK_JSON" ]; then
+        jq --arg ec "$EXIT_CODE" ".exit_code = (\$ec | tonumber)" \
+            "$TASK_JSON" > "${TASK_JSON}.tmp" \
+            && mv "${TASK_JSON}.tmp" "$TASK_JSON"
+    fi
+' > /dev/null 2>&1 &
 
 # Get PID
 BG_PID=$!
@@ -137,16 +148,23 @@ BG_PID=$!
 jq --arg pid "$BG_PID" '.pid = ($pid | tonumber)' "$TASK_FILE" > "${TASK_FILE}.tmp" \
     && mv "${TASK_FILE}.tmp" "$TASK_FILE"
 
-# Output result
-cat << EOF
-{
-    "success": true,
-    "task_id": "$TASK_ID",
-    "directory": "$WORKDIR",
-    "prompt": $(echo "$PROMPT" | jq -Rs .),
-    "agent_teams": $AGENT_TEAMS,
-    "model": "$MODEL",
-    "pid": $BG_PID,
-    "log_file": "$LOG_FILE"
-}
-EOF
+# Output result (safe JSON)
+jq -n \
+    --argjson success true \
+    --arg tid "$TASK_ID" \
+    --arg dir "$WORKDIR" \
+    --arg prompt "$PROMPT" \
+    --argjson agent_teams "$AGENT_TEAMS" \
+    --arg model "$MODEL" \
+    --argjson pid "$BG_PID" \
+    --arg log "$LOG_FILE" \
+    '{
+        success: $success,
+        task_id: $tid,
+        directory: $dir,
+        prompt: $prompt,
+        agent_teams: $agent_teams,
+        model: $model,
+        pid: $pid,
+        log_file: $log
+    }'

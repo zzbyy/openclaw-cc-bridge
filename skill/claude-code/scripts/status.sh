@@ -85,7 +85,7 @@ else
     TASKS=()
     
     # Active tasks
-    for f in "$TASKS_DIR"/*.json 2>/dev/null; do
+    for f in "$TASKS_DIR"/*.json; do
         [ -f "$f" ] || continue
         TASK_DATA=$(cat "$f")
         TASK_ID=$(echo "$TASK_DATA" | jq -r '.task_id')
@@ -102,23 +102,33 @@ else
             fi
         fi
         
-        TASKS+=("{\"task_id\":\"$TASK_ID\",\"status\":\"$STATUS\",\"running\":$RUNNING,\"directory\":\"$CWD\",\"prompt\":$(echo "$PROMPT" | jq -Rs .)}")
+        TASK_ENTRY=$(jq -n --arg tid "$TASK_ID" --arg st "$STATUS" --argjson run "$RUNNING" \
+            --arg dir "$CWD" --arg pr "$PROMPT" \
+            '{task_id: $tid, status: $st, running: $run, directory: $dir, prompt: $pr}')
+        TASKS+=("$TASK_ENTRY")
     done
-    
+
     # Pending questions
-    QUESTIONS=[]
+    QUESTIONS="[]"
     if [ -d "$QUESTIONS_DIR" ]; then
-        QUESTIONS=$(find "$QUESTIONS_DIR" -name "*.json" -exec cat {} \; 2>/dev/null | jq -s '.')
+        QUESTIONS=$(find "$QUESTIONS_DIR" -name "*.json" -exec cat {} \; 2>/dev/null | jq -s '. // []')
+        [ -z "$QUESTIONS" ] && QUESTIONS="[]"
     fi
-    
+
     # Recent completed (last 5)
-    COMPLETED=[]
-    if [ -d "$COMPLETED_DIR" ]; then
+    COMPLETED="[]"
+    if [ -d "$COMPLETED_DIR" ] && ls "$COMPLETED_DIR"/*.json &>/dev/null; then
         COMPLETED=$(ls -t "$COMPLETED_DIR"/*.json 2>/dev/null | head -5 | while read f; do
             jq -c '{task_id, status, cwd: .cwd, ended_at: .ended_at}' "$f"
-        done | jq -s '.')
+        done | jq -s '. // []')
+        [ -z "$COMPLETED" ] && COMPLETED="[]"
     fi
-    
-    # Output
-    echo "{\"active_tasks\": [$(IFS=,; echo "${TASKS[*]}")], \"pending_questions\": $QUESTIONS, \"recent_completed\": $COMPLETED}"
+
+    # Output (safe JSON via jq)
+    TASKS_JSON="[]"
+    if [ ${#TASKS[@]} -gt 0 ]; then
+        TASKS_JSON=$(printf '%s\n' "${TASKS[@]}" | jq -s '.')
+    fi
+    jq -n --argjson tasks "$TASKS_JSON" --argjson questions "$QUESTIONS" --argjson completed "$COMPLETED" \
+        '{active_tasks: $tasks, pending_questions: $questions, recent_completed: $completed}'
 fi

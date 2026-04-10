@@ -115,10 +115,14 @@ Phone (Telegram) → OpenClaw → Claude Code → Your Project
 ~/.claude/
 ├── settings.json            # Claude Code settings (hooks registered here)
 └── hooks/                   # Hook scripts
-    ├── session-start.sh
-    ├── post-tool-use.sh
-    ├── elicitation.sh
-    └── session-end.sh
+    ├── hook-utils.sh        # Shared utilities (sourced by all hooks)
+    ├── session-start.sh     # Task started notification
+    ├── post-tool-use.sh     # Progress tracking (files, commands, tests)
+    ├── post-tool-use-failure.sh  # Error tracking
+    ├── notification.sh      # Idle/permission notifications
+    ├── elicitation.sh       # Question forwarding (blocking)
+    ├── stop.sh              # Milestone progress pings
+    └── session-end.sh       # Completion summary
 ```
 
 ## Troubleshooting

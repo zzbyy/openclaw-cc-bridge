@@ -56,41 +56,10 @@ fi
 # Display CWD
 DISPLAY_CWD=$(echo "$CWD" | sed "s|^$HOME|~|")
 
-# Build file changes section
-FILE_CHANGES=""
+# File counts for later
 CREATED_COUNT=$(echo "$FILES_CREATED" | jq 'length')
 MODIFIED_COUNT=$(echo "$FILES_MODIFIED" | jq 'length')
 TOTAL_FILES=$((CREATED_COUNT + MODIFIED_COUNT))
-
-if [ "$TOTAL_FILES" -gt 0 ]; then
-    FILE_CHANGES="📄 Files changed ($TOTAL_FILES):"
-    
-    # Show created files (max 5)
-    if [ "$CREATED_COUNT" -gt 0 ]; then
-        echo "$FILES_CREATED" | jq -r '.[:5][]' | while read f; do
-            SHORT=$(basename "$f")
-            FILE_CHANGES="$FILE_CHANGES
-   + $SHORT (new)"
-        done
-        if [ "$CREATED_COUNT" -gt 5 ]; then
-            FILE_CHANGES="$FILE_CHANGES
-   + ...and $((CREATED_COUNT - 5)) more"
-        fi
-    fi
-    
-    # Show modified files (max 5)
-    if [ "$MODIFIED_COUNT" -gt 0 ]; then
-        echo "$FILES_MODIFIED" | jq -r '.[:5][]' | while read f; do
-            SHORT=$(basename "$f")
-            FILE_CHANGES="$FILE_CHANGES
-   ~ $SHORT (modified)"
-        done
-        if [ "$MODIFIED_COUNT" -gt 5 ]; then
-            FILE_CHANGES="$FILE_CHANGES
-   ~ ...and $((MODIFIED_COUNT - 5)) more"
-        fi
-    fi
-fi
 
 # Build errors section
 ERROR_SECTION=""
@@ -224,8 +193,8 @@ MESSAGE="$MESSAGE
 ━━━━━━━━━━━━━━━━━━━━━"
 
 # Update task status
-jq --arg reason "$REASON" --arg status "completed" \
-   '.status = $status | .ended_at = now | .end_reason = $reason' \
+jq --arg reason "$REASON" --arg status "completed" --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+   '.status = $status | .ended_at = $ts | .end_reason = $reason' \
    "$TASK_FILE" > "${TASK_FILE}.tmp" && mv "${TASK_FILE}.tmp" "$TASK_FILE"
 
 # Move to completed
@@ -244,7 +213,7 @@ find "$BRIDGE_DIR/questions" -name "*.json" 2>/dev/null | while read qf; do
 done
 
 # Write completion event
-EVENT_FILE="$BRIDGE_DIR/events/$(date +%s%N)-complete.json"
+EVENT_FILE="$BRIDGE_DIR/events/$(portable_timestamp)-complete.json"
 cat > "$EVENT_FILE" << EOF
 {
     "event": "session_end",

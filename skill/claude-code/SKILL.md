@@ -48,13 +48,6 @@ Or reply directly to the question message.
 /cc-status <task-id>    # Get specific task details
 ```
 
-### View logs
-
-```
-/cc-logs <task-id>      # View recent output
-/cc-logs <task-id> -n 50  # View last 50 lines
-```
-
 ### Stop a task
 
 ```

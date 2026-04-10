@@ -6,17 +6,18 @@
 
 set -e
 
+if [ $# -lt 2 ]; then
+    [ $# -lt 1 ] && echo '{"error": "No question ID specified"}' >&2 && exit 1
+    echo '{"error": "No answer text specified"}' >&2 && exit 1
+fi
+
 QUESTION_ID="$1"
 shift
 ANSWER_TEXT="$*"
 
-if [ -z "$QUESTION_ID" ]; then
-    echo '{"error": "No question ID specified"}' >&2
-    exit 1
-fi
-
-if [ -z "$ANSWER_TEXT" ]; then
-    echo '{"error": "No answer text specified"}' >&2
+# Validate ID format (alphanumeric, hyphens, underscores only)
+if [[ ! "$QUESTION_ID" =~ ^[a-zA-Z0-9_-]+$ ]]; then
+    echo '{"error": "Invalid question ID format"}' >&2
     exit 1
 fi
 

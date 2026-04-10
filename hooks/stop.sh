@@ -40,7 +40,7 @@ LAST_ACTIVITY=$(echo "$TRACKING" | jq -r '.last_activity // "Working..."')
 TOOL_CALLS=$(echo "$TRACKING" | jq -r '.tool_calls // 0')
 
 # Update task
-jq '.last_stop_at = now' "$TASK_FILE" > "${TASK_FILE}.tmp" \
+jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.last_stop_at = $ts' "$TASK_FILE" > "${TASK_FILE}.tmp" \
     && mv "${TASK_FILE}.tmp" "$TASK_FILE"
 
 # Get milestone interval from config

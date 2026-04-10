@@ -55,7 +55,7 @@
           {
             "type": "command",
             "command": "~/.claude/hooks/elicitation.sh",
-            "timeout": 300
+            "timeout": 330
           }
         ]
       }

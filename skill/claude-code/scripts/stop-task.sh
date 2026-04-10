@@ -45,8 +45,20 @@ fi
 
 # Check if running
 if ! ps -p "$PID" > /dev/null 2>&1; then
-    echo "{\"error\": \"Process $PID is not running\"}" >&2
+    jq -n --arg msg "Process $PID is not running" '{"error": $msg}' >&2
     exit 1
+fi
+
+# Verify PID belongs to our task (not a recycled PID)
+PROC_CMD=$(ps -p "$PID" -o command= 2>/dev/null || echo "")
+if [[ "$PROC_CMD" != *"claude"* ]] && [[ "$PROC_CMD" != *"cc-bridge"* ]] && [[ "$PROC_CMD" != *"nohup"* ]]; then
+    # PID was recycled — task already exited
+    jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.status = "stopped" | .stopped_at = $ts' \
+        "$TASK_FILE" > "${TASK_FILE}.tmp" && mv "${TASK_FILE}.tmp" "$TASK_FILE"
+    mkdir -p "$BRIDGE_DIR/completed"
+    mv "$TASK_FILE" "$BRIDGE_DIR/completed/"
+    echo "{\"success\": true, \"task_id\": \"$TASK_ID\", \"status\": \"already_exited\"}"
+    exit 0
 fi
 
 # Kill the process group (to also stop any child processes)
@@ -70,7 +82,7 @@ fi
 
 if [ "$KILLED" = true ]; then
     # Update task status
-    jq '.status = "stopped" | .stopped_at = now' "$TASK_FILE" > "${TASK_FILE}.tmp" \
+    jq --arg ts "$(date -u +%Y-%m-%dT%H:%M:%SZ)" '.status = "stopped" | .stopped_at = $ts' "$TASK_FILE" > "${TASK_FILE}.tmp" \
         && mv "${TASK_FILE}.tmp" "$TASK_FILE"
     
     # Move to completed

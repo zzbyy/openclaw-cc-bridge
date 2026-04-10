@@ -32,7 +32,7 @@ if is_enabled "error"; then
 fi
 
 # Write event
-EVENT_FILE="$BRIDGE_DIR/events/$(date +%s%N)-error.json"
+EVENT_FILE="$BRIDGE_DIR/events/$(portable_timestamp)-error.json"
 cat > "$EVENT_FILE" << EOF
 {
     "event": "error",

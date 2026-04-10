@@ -12,7 +12,7 @@ INPUT=$(cat)
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // ""')
 TOOL_INPUT=$(echo "$INPUT" | jq -r '.tool_input // {}')
-TOOL_OUTPUT=$(echo "$INPUT" | jq -r '.tool_output // ""' | head -c 500)
+TOOL_OUTPUT=$(echo "$INPUT" | jq -r '.tool_response // ""' | head -c 500)
 
 # Find task
 TASK_FILE=$(find_task_by_session "$SESSION_ID")
