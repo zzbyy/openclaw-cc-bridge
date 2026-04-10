@@ -1,12 +1,14 @@
 #!/bin/bash
-# install.sh - Install OpenClaw + Claude Code Bridge
+# install.sh - Install/Update OpenClaw + Claude Code Bridge
+#
+# Safe to re-run — idempotent. Existing bridge hooks are replaced, not duplicated.
 #
 # This script:
 # 1. Creates necessary directories
 # 2. Copies hook scripts to ~/.claude/hooks/
-# 3. Merges hooks config into ~/.claude/settings.json
+# 3. Merges hooks config into ~/.claude/settings.json (idempotent)
 # 4. Copies skill to OpenClaw skills directory
-# 5. Adds environment variables to ~/.openclaw/.env
+# 5. Verifies OpenClaw configuration
 
 set -e
 
@@ -55,17 +57,24 @@ if [ -f "$CLAUDE_SETTINGS" ]; then
     cp "$CLAUDE_SETTINGS" "${CLAUDE_SETTINGS}.backup.$(date +%s)"
     success "Backed up existing settings"
     
-    # Merge hooks — append to existing arrays instead of replacing them
+    # Idempotent merge: remove existing bridge hooks (identified by ~/.claude/hooks/ path),
+    # then append new ones. This makes re-running safe (update, not duplicate).
     NEW_HOOKS=$(jq '.hooks' "$SCRIPT_DIR/claude-settings.json")
     jq --argjson new "$NEW_HOOKS" '
-        .hooks as $existing |
+        # First strip any existing bridge hook entries from all events
+        .hooks |= (if . then
+            with_entries(
+                .value |= [.[] | select(.hooks | all(.command | test("~/\\.claude/hooks/") | not))]
+            )
+        else {} end) |
+        # Then append new bridge hooks
         reduce ($new | keys[]) as $event (
             .;
-            .hooks[$event] = (($existing[$event] // []) + $new[$event])
+            .hooks[$event] = ((.hooks[$event] // []) + $new[$event])
         )
     ' "$CLAUDE_SETTINGS" > "${CLAUDE_SETTINGS}.tmp"
     mv "${CLAUDE_SETTINGS}.tmp" "$CLAUDE_SETTINGS"
-    success "Merged hooks into existing settings (appended, not replaced)"
+    success "Merged hooks into settings (safe to re-run)"
 else
     cp "$SCRIPT_DIR/claude-settings.json" "$CLAUDE_SETTINGS"
     success "Created new settings.json"
