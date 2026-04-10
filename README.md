@@ -142,6 +142,14 @@ export CC_ELICITATION_TIMEOUT=600
 tail -f ~/.openclaw/cc-bridge/logs/hooks.log
 ```
 
+## Updating
+
+Re-run the installer — it's idempotent (replaces old bridge hooks, preserves your other hooks):
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
+```
+
 ## Security
 
 - Tasks use `--dangerously-skip-permissions` — dispatch only trusted tasks

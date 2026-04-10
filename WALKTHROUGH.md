@@ -580,6 +580,18 @@ sudo apt install jq
 
 ---
 
+## Updating
+
+To update to the latest version, re-run the same install command:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
+```
+
+The installer is idempotent — it replaces old bridge hooks and scripts without duplicating them, and preserves any non-bridge hooks in your `~/.claude/settings.json`.
+
+---
+
 ## Next Steps
 
 - [ ] Set up multiple topics for parallel tasks
