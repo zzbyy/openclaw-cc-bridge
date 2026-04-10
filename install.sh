@@ -80,16 +80,19 @@ else
     success "Created new settings.json"
 fi
 
-# 4. Copy OpenClaw skill
+# 4. Copy OpenClaw skill (personal skills dir: ~/.agents/skills/)
 echo ""
 echo "Installing OpenClaw skill..."
-SKILLS_DIR="$HOME/.openclaw/skills"
+SKILLS_DIR="$HOME/.agents/skills"
 mkdir -p "$SKILLS_DIR"
 
 if [ -d "$SCRIPT_DIR/skill/claude-code" ]; then
+    # Remove old location if it exists
+    rm -rf "$HOME/.openclaw/skills/claude-code" 2>/dev/null || true
+    # Install to correct personal skills directory
     cp -r "$SCRIPT_DIR/skill/claude-code" "$SKILLS_DIR/"
     chmod +x "$SKILLS_DIR/claude-code/scripts"/*.sh 2>/dev/null || true
-    success "Installed claude-code skill"
+    success "Installed claude-code skill to $SKILLS_DIR/claude-code/"
 else
     warn "Skill directory not found, skipping"
 fi

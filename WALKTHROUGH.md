@@ -148,7 +148,7 @@ cd openclaw-cc-bridge
 The installer will:
 - Copy hook scripts to `~/.claude/hooks/`
 - Register hooks in `~/.claude/settings.json` (idempotent -- safe to re-run)
-- Copy the skill to `~/.openclaw/skills/claude-code/`
+- Copy the skill to `~/.agents/skills/claude-code/` (OpenClaw personal skills dir)
 - Verify your OpenClaw configuration
 
 ---
@@ -431,7 +431,7 @@ claude -p "say hello" --dangerously-skip-permissions
 
 ```bash
 chmod +x ~/.claude/hooks/*.sh
-chmod +x ~/.openclaw/skills/claude-code/scripts/*.sh
+chmod +x ~/.agents/skills/claude-code/scripts/*.sh
 ```
 
 ---
@@ -483,7 +483,7 @@ chmod +x ~/.openclaw/skills/claude-code/scripts/*.sh
 |------|---------|
 | `~/.openclaw/openclaw.json` | OpenClaw config (gateway token, telegram, etc.) |
 | `~/.openclaw/.env` | Optional overrides (`CC_TELEGRAM_GROUP`, etc.) |
-| `~/.openclaw/skills/claude-code/` | Bridge skill for OpenClaw |
+| `~/.agents/skills/claude-code/` | Bridge skill for OpenClaw |
 | `~/.openclaw/cc-bridge/` | Bridge data directory |
 | `~/.openclaw/cc-bridge/config.json` | Notification settings |
 | `~/.openclaw/cc-bridge/tasks/` | Active task files |

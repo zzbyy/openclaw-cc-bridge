@@ -1,3 +1,13 @@
+---
+name: claude-code
+description: 'Dispatch Claude Code tasks from Telegram with auto forum topics. Triggers on: messages starting with "cc " or "claude-code ", "/answer", "/cc-status", "/cc-stop", "/cc-config". Each task creates a forum topic in the configured group with progress, questions, and completion updates.'
+metadata:
+  openclaw:
+    emoji: "🤖"
+    requires:
+      anyBins: ["claude"]
+---
+
 # Claude Code Bridge Skill
 
 This skill enables OpenClaw to dispatch and manage Claude Code tasks via Telegram.
@@ -5,8 +15,8 @@ This skill enables OpenClaw to dispatch and manage Claude Code tasks via Telegra
 ## Triggers
 
 Activate this skill when the user:
-- Wants to run Claude Code on a project
-- Uses commands like `cc`, `claude-code`, or mentions "claude code"
+- Sends a message starting with `cc ` or `claude-code `
+- Sends `/answer`, `/cc-status`, `/cc-stop`, or `/cc-config`
 - Asks about running development tasks in background
 - Wants to check status of Claude Code tasks
 - Needs to answer a Claude Code question

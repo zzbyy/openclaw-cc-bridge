@@ -104,10 +104,11 @@ All tests passing.
 ## Files
 
 ```
+~/.agents/skills/claude-code/ # The skill (SKILL.md, CLAUDE.md, scripts/)
+
 ~/.openclaw/
 ├── openclaw.json            # OpenClaw config (gateway token, telegram, etc.)
 ├── .env                     # Optional overrides (CC_TELEGRAM_GROUP, etc.)
-├── skills/claude-code/      # The skill that handles cc commands
 └── cc-bridge/               # Bridge data
     ├── config.json          # Notification settings
     ├── tasks/               # Active tasks

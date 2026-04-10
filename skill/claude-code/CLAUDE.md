@@ -31,7 +31,7 @@ cc ~/projects/api refactor the database layer
 
 **Action**: Run the dispatch script:
 ```bash
-~/.openclaw/skills/claude-code/scripts/dispatch.sh --dir "<directory>" [--topic "<topic_id>"] -- "<task description>"
+~/.agents/skills/claude-code/scripts/dispatch.sh --dir "<directory>" [--topic "<topic_id>"] -- "<task description>"
 ```
 
 The script auto-creates a forum topic in the group if no `--topic` is specified and
@@ -74,7 +74,7 @@ Reply with: /answer [question-id] <your answer>
 
 When user sends `/answer <id> <text>`:
 ```bash
-~/.openclaw/skills/claude-code/scripts/answer.sh "<id>" "<text>"
+~/.agents/skills/claude-code/scripts/answer.sh "<id>" "<text>"
 ```
 
 **Response**:
@@ -86,19 +86,19 @@ When user sends `/answer <id> <text>`:
 
 `/cc-status` - List all active tasks:
 ```bash
-~/.openclaw/skills/claude-code/scripts/status.sh
+~/.agents/skills/claude-code/scripts/status.sh
 ```
 
 `/cc-status <id>` - Get specific task:
 ```bash
-~/.openclaw/skills/claude-code/scripts/status.sh "<id>"
+~/.agents/skills/claude-code/scripts/status.sh "<id>"
 ```
 
 ## Stop Command
 
 `/cc-stop <id>` - Stop a task:
 ```bash
-~/.openclaw/skills/claude-code/scripts/stop-task.sh "<id>"
+~/.agents/skills/claude-code/scripts/stop-task.sh "<id>"
 ```
 
 ## Configure Notifications
@@ -107,21 +107,21 @@ Control which notifications you receive:
 
 `/cc-config` - Show current settings:
 ```bash
-~/.openclaw/skills/claude-code/scripts/config.sh show
+~/.agents/skills/claude-code/scripts/config.sh show
 ```
 
 `/cc-config <preset>` - Apply a preset:
 ```bash
-~/.openclaw/skills/claude-code/scripts/config.sh quiet    # Only completion & errors
-~/.openclaw/skills/claude-code/scripts/config.sh minimal  # Start + completion + errors  
-~/.openclaw/skills/claude-code/scripts/config.sh verbose  # All notifications
+~/.agents/skills/claude-code/scripts/config.sh quiet    # Only completion & errors
+~/.agents/skills/claude-code/scripts/config.sh minimal  # Start + completion + errors  
+~/.agents/skills/claude-code/scripts/config.sh verbose  # All notifications
 ```
 
 `/cc-config set <key> <on|off>` - Toggle specific notifications:
 ```bash
-~/.openclaw/skills/claude-code/scripts/config.sh set notifications.progress off
-~/.openclaw/skills/claude-code/scripts/config.sh set notifications.start on
-~/.openclaw/skills/claude-code/scripts/config.sh toggle notifications.complete
+~/.agents/skills/claude-code/scripts/config.sh set notifications.progress off
+~/.agents/skills/claude-code/scripts/config.sh set notifications.start on
+~/.agents/skills/claude-code/scripts/config.sh toggle notifications.complete
 ```
 
 **Notification types:**
