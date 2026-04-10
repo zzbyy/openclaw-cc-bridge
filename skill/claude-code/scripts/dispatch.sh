@@ -62,10 +62,13 @@ if [ -z "$PROMPT" ]; then
 fi
 
 # Safe tilde expansion (no eval)
-case "$WORKDIR" in
-    ~/*) WORKDIR="$HOME/${WORKDIR#\~/}" ;;
-    ~)   WORKDIR="$HOME" ;;
-esac
+# Note: bash case expands ~ in patterns, so ~/* matches any path under $HOME.
+# Use [[ ]] with single-quoted tilde to match the literal ~ character.
+if [[ "$WORKDIR" == '~/'* ]]; then
+    WORKDIR="$HOME/${WORKDIR:2}"
+elif [[ "$WORKDIR" == '~' ]]; then
+    WORKDIR="$HOME"
+fi
 if [ ! -d "$WORKDIR" ]; then
     jq -n --arg msg "Directory does not exist: $WORKDIR" '{"error": $msg}' >&2
     exit 1
