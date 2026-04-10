@@ -117,36 +117,16 @@ For a dedicated "control room":
 openclaw init
 ```
 
-### Step 4.2: Edit Configuration
+### Step 4.2: Configure via Wizard
 
-Open `~/.openclaw/config.yaml` and configure:
+Run the interactive configuration wizard:
 
-```yaml
-# ~/.openclaw/config.yaml
-
-gateway:
-  port: 18789
-  token: "your-secure-gateway-token"  # Generate: openssl rand -hex 32
-
-channels:
-  telegram:
-    enabled: true
-    token: "YOUR_BOT_TOKEN_FROM_BOTFATHER"
-    allowedUsers:
-      - YOUR_USER_ID
-    # Optional: restrict to specific groups
-    groups:
-      - "-100xxxxxxxxxx"  # Your group ID
-    groupPolicy: "allowlist"  # or "open" to allow any group
-
-hooks:
-  enabled: true
-  token: "your-secure-gateway-token"  # Same as gateway.token
-
-# Skills directory
-skills:
-  directory: ~/.openclaw/skills
+```bash
+openclaw configure
 ```
+
+This sets up your gateway token, Telegram bot token, allowed users, and other settings
+in `~/.openclaw/openclaw.json`. The bridge reads from this file automatically.
 
 ### Step 4.3: Test Telegram Connection
 
@@ -558,7 +538,7 @@ sudo apt install jq
 
 | Path | Purpose |
 |------|---------|
-| `~/.openclaw/config.yaml` | OpenClaw configuration |
+| `~/.openclaw/openclaw.json` | OpenClaw configuration (gateway token, telegram, etc.) |
 | `~/.openclaw/.env` | Environment variables |
 | `~/.openclaw/skills/claude-code/` | Bridge skill for OpenClaw |
 | `~/.openclaw/cc-bridge/` | Bridge data directory |
