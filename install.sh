@@ -87,12 +87,14 @@ SKILLS_DIR="$HOME/.agents/skills"
 mkdir -p "$SKILLS_DIR"
 
 if [ -d "$SCRIPT_DIR/skill/claude-code" ]; then
-    # Remove old location if it exists
+    # Remove old locations if they exist
     rm -rf "$HOME/.openclaw/skills/claude-code" 2>/dev/null || true
-    # Install to correct personal skills directory
-    cp -r "$SCRIPT_DIR/skill/claude-code" "$SKILLS_DIR/"
-    chmod +x "$SKILLS_DIR/claude-code/scripts"/*.sh 2>/dev/null || true
-    success "Installed claude-code skill to $SKILLS_DIR/claude-code/"
+    rm -rf "$SKILLS_DIR/claude-code" 2>/dev/null || true
+    # Install as 'cc' skill (matches the name in SKILL.md frontmatter)
+    rm -rf "$SKILLS_DIR/cc" 2>/dev/null || true
+    cp -r "$SCRIPT_DIR/skill/claude-code" "$SKILLS_DIR/cc"
+    chmod +x "$SKILLS_DIR/cc/scripts"/*.sh 2>/dev/null || true
+    success "Installed cc skill to $SKILLS_DIR/cc/"
 else
     warn "Skill directory not found, skipping"
 fi

@@ -13,7 +13,7 @@ You (DM) ──► OpenClaw bot ──► Claude Code runs in background
                     (progress, questions, completion)
 ```
 
-1. DM your bot: `cc ~/project implement auth`
+1. DM your bot: `/cc ~/project implement auth`
 2. A forum topic is auto-created in your group
 3. Progress, questions, and completion go to that topic
 4. Each task gets its own topic -- parallel tasks stay organized
@@ -31,7 +31,7 @@ echo 'CC_TELEGRAM_GROUP=-100xxxxxxxxxx' >> ~/.openclaw/.env
 openclaw gateway --force
 
 # DM your bot in Telegram
-cc ~/test-folder create a hello.py that prints hello world
+/cc ~/test-folder create a hello.py that prints hello world
 ```
 
 See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
@@ -40,8 +40,8 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 
 | Command | Description |
 |---------|-------------|
-| `cc <dir> <task>` | Start a task (auto-creates forum topic) |
-| `cc --topic <id> <dir> <task>` | Start task in a specific topic |
+| `/cc <dir> <task>` | Start a task (auto-creates forum topic) |
+| `/cc --topic <id> <dir> <task>` | Start task in a specific topic |
 | `/answer <id> <text>` | Answer a question |
 | `/cc-status` | List active tasks |
 | `/cc-stop <id>` | Stop a task |
@@ -104,7 +104,7 @@ All tests passing.
 ## Files
 
 ```
-~/.agents/skills/claude-code/ # The skill (SKILL.md, CLAUDE.md, scripts/)
+~/.agents/skills/cc/ # The skill (SKILL.md, CLAUDE.md, scripts/)
 
 ~/.openclaw/
 ├── openclaw.json            # OpenClaw config (gateway token, telegram, etc.)

@@ -148,7 +148,7 @@ cd openclaw-cc-bridge
 The installer will:
 - Copy hook scripts to `~/.claude/hooks/`
 - Register hooks in `~/.claude/settings.json` (idempotent -- safe to re-run)
-- Copy the skill to `~/.agents/skills/claude-code/` (OpenClaw personal skills dir)
+- Copy the skill to `~/.agents/skills/cc/` (OpenClaw personal skills dir)
 - Verify your OpenClaw configuration
 
 ---
@@ -288,7 +288,7 @@ openclaw gateway --force
 DM your bot in Telegram:
 
 ```
-cc ~/test-folder create a hello.py that prints hello world
+/cc ~/test-folder create a hello.py that prints hello world
 ```
 
 ### Step 8.3: Expected Flow
@@ -323,7 +323,7 @@ cc ~/test-folder create a hello.py that prints hello world
 Try a task that requires input:
 
 ```
-cc ~/test-folder create a config file, ask me what settings to include
+/cc ~/test-folder create a config file, ask me what settings to include
 ```
 
 You should receive a question in the topic and be able to answer with `/answer`.
@@ -345,8 +345,8 @@ openclaw gateway --force
 
 | Command | Description |
 |---------|-------------|
-| `cc <dir> <task>` | Start a task (auto-creates topic) |
-| `cc --topic <id> <dir> <task>` | Start task in a specific topic |
+| `/cc <dir> <task>` | Start a task (auto-creates topic) |
+| `/cc --topic <id> <dir> <task>` | Start task in a specific topic |
 | `/answer <id> <text>` | Answer a question |
 | `/cc-status` | List active tasks |
 | `/cc-stop <id>` | Stop a task |
@@ -431,7 +431,7 @@ claude -p "say hello" --dangerously-skip-permissions
 
 ```bash
 chmod +x ~/.claude/hooks/*.sh
-chmod +x ~/.agents/skills/claude-code/scripts/*.sh
+chmod +x ~/.agents/skills/cc/scripts/*.sh
 ```
 
 ---
@@ -483,7 +483,7 @@ chmod +x ~/.agents/skills/claude-code/scripts/*.sh
 |------|---------|
 | `~/.openclaw/openclaw.json` | OpenClaw config (gateway token, telegram, etc.) |
 | `~/.openclaw/.env` | Optional overrides (`CC_TELEGRAM_GROUP`, etc.) |
-| `~/.agents/skills/claude-code/` | Bridge skill for OpenClaw |
+| `~/.agents/skills/cc/` | Bridge skill for OpenClaw |
 | `~/.openclaw/cc-bridge/` | Bridge data directory |
 | `~/.openclaw/cc-bridge/config.json` | Notification settings |
 | `~/.openclaw/cc-bridge/tasks/` | Active task files |

@@ -1,169 +1,102 @@
-# Claude Code Integration Instructions
-
-You can dispatch tasks to Claude Code and manage them via these commands.
-
-## How It Works
-
-Users send tasks via **DM** to this bot. Each task automatically gets its own **forum topic**
-in the configured Telegram group (`CC_TELEGRAM_GROUP`). All updates — progress, questions,
-completion — go to that topic. This keeps DMs clean and lets you track parallel tasks.
-
-```
-DM: "cc ~/project implement auth" → Bot creates topic "[abc1] implement auth..."
-                                   → All updates land in that topic
-                                   → Completion summary posted there too
-```
+# CC Bridge — Agent Instructions
 
 ## Dispatching Tasks
 
-When the user sends a message starting with `cc ` or `claude-code `, parse it as a Claude Code task:
+When a message starts with `cc ` or `/cc `, **you MUST use dispatch.sh** — never run `claude` directly.
+The bridge creates task files, forum topics, and notification hooks that only work through dispatch.sh.
 
-**Format**: `cc <directory> <task description>`
+### Parse the message
 
-**With explicit topic** (optional — topics are auto-created by default):
-`cc --topic <topic_id> <directory> <task description>`
-
-**Examples**:
 ```
-cc ~/projects/myapp implement user authentication with JWT tokens
-cc ~/projects/api refactor the database layer
+/cc <directory> <task description>
+/cc --topic <id> <directory> <task description>
 ```
 
-**Action**: Run the dispatch script:
+First token after `cc` is the directory (starts with `~/` or `/`). Everything after is the prompt.
+
+### Run dispatch.sh
+
 ```bash
-~/.agents/skills/claude-code/scripts/dispatch.sh --dir "<directory>" [--topic "<topic_id>"] -- "<task description>"
+bash background:true command:"~/.agents/skills/cc/scripts/dispatch.sh --dir '<directory>' -- '<task description>'"
 ```
 
-The script auto-creates a forum topic in the group if no `--topic` is specified and
-`CC_TELEGRAM_GROUP` is set. The topic is named after the task prompt.
-
-**Response format** (reply in DM to confirm):
-```
-✅ Task started!
-📋 ID: task-xxx
-📁 Directory: /path/to/project
-🚀 Running in background...
-
-Updates will appear in the group topic.
-I'll notify you when:
-• Task completes
-• Claude Code has questions
-• Something needs attention
-```
-
-## Handling Claude Code Questions
-
-When you receive a wake event containing `[CC-QUESTION]`:
-
-1. Read the question file from `~/.openclaw/cc-bridge/questions/`
-2. Send to user in this format:
-
-```
-🤔 Claude Code Question
-━━━━━━━━━━━━━━━━━━━━━
-Task: [task-id]
-━━━━━━━━━━━━━━━━━━━━━
-
-[question text here]
-
-━━━━━━━━━━━━━━━━━━━━━
-Reply with: /answer [question-id] <your answer>
-```
-
-## Handling Answers
-
-When user sends `/answer <id> <text>`:
+**With explicit topic:**
 ```bash
-~/.agents/skills/claude-code/scripts/answer.sh "<id>" "<text>"
+bash background:true command:"~/.agents/skills/cc/scripts/dispatch.sh --dir '<directory>' --topic '<topic_id>' -- '<task description>'"
 ```
 
-**Response**:
+The script:
+- Auto-creates a forum topic in the group (if `CC_TELEGRAM_GROUP` is set)
+- Spawns Claude Code in background
+- Returns JSON with `task_id`, `pid`, `topic`
+
+### Confirm to user
+
+After dispatch.sh returns, reply in DM:
 ```
-✅ Answer sent to Claude Code
+✅ Task dispatched!
+📋 ID: <task_id>
+📁 Directory: <directory>
+🚀 Updates will appear in the group topic.
 ```
 
-## Status Commands
+## Answering Questions
 
-`/cc-status` - List all active tasks:
+When user sends `/answer <question-id> <answer text>`:
+
 ```bash
-~/.agents/skills/claude-code/scripts/status.sh
+bash command:"~/.agents/skills/cc/scripts/answer.sh '<question-id>' '<answer text>'"
 ```
 
-`/cc-status <id>` - Get specific task:
+Reply: `✅ Answer sent to Claude Code`
+
+## Status
+
+`/cc-status`:
 ```bash
-~/.agents/skills/claude-code/scripts/status.sh "<id>"
+bash command:"~/.agents/skills/cc/scripts/status.sh"
 ```
 
-## Stop Command
-
-`/cc-stop <id>` - Stop a task:
+`/cc-status <id>`:
 ```bash
-~/.agents/skills/claude-code/scripts/stop-task.sh "<id>"
+bash command:"~/.agents/skills/cc/scripts/status.sh '<task-id>'"
 ```
+
+Format the JSON output as a readable status message.
+
+## Stop
+
+`/cc-stop <id>`:
+```bash
+bash command:"~/.agents/skills/cc/scripts/stop-task.sh '<task-id>'"
+```
+
+Reply: `⏹️ Task <id> stopped`
 
 ## Configure Notifications
 
-Control which notifications you receive:
-
-`/cc-config` - Show current settings:
+`/cc-config`:
 ```bash
-~/.agents/skills/claude-code/scripts/config.sh show
+bash command:"~/.agents/skills/cc/scripts/config.sh show"
 ```
 
-`/cc-config <preset>` - Apply a preset:
+`/cc-config <preset>` (quiet, minimal, verbose):
 ```bash
-~/.agents/skills/claude-code/scripts/config.sh quiet    # Only completion & errors
-~/.agents/skills/claude-code/scripts/config.sh minimal  # Start + completion + errors  
-~/.agents/skills/claude-code/scripts/config.sh verbose  # All notifications
+bash command:"~/.agents/skills/cc/scripts/config.sh <preset>"
 ```
 
-`/cc-config set <key> <on|off>` - Toggle specific notifications:
+`/cc-config set <key> <on|off>`:
 ```bash
-~/.agents/skills/claude-code/scripts/config.sh set notifications.progress off
-~/.agents/skills/claude-code/scripts/config.sh set notifications.start on
-~/.agents/skills/claude-code/scripts/config.sh toggle notifications.complete
+bash command:"~/.agents/skills/cc/scripts/config.sh set <key> <value>"
 ```
 
-**Notification types:**
-- `notifications.start` - Task started
-- `notifications.progress` - Progress updates (files, tests, etc.)
-- `notifications.question` - Questions from Claude Code (⚠️ keep on!)
-- `notifications.complete` - Completion summary
-- `notifications.error` - Error alerts
+## Wake Events
 
-**Progress sub-filters** (when progress=on):
-- `progress_filter.file_created` - New file notifications
-- `progress_filter.package_install` - npm/pip/yarn install
-- `progress_filter.tests` - Test runs
-- `progress_filter.git` - Git commits/push
-- `progress_filter.subagent` - Subagent spawns
-- `progress_filter.milestone_interval` - Steps between updates (default: 5)
+Claude Code hooks send wake events as tasks progress. When you see these in the session:
 
-## Event Handling
-
-When you receive wake events from Claude Code hooks:
-
-- `[CC-START] <task-id>` → Acknowledge silently (already notified on dispatch)
-- `[CC-PROGRESS] [<task-id>] ...` → Forward progress update to user
-- `[CC-COMPLETE] <task-id> ...` → Send completion summary to user
-- `[CC-ERROR] [<task-id>] ...` → Notify: "⚠️ Error in task"
-- `[CC-QUESTION] <question-id> task:<task-id>` → Forward question to user (see above)
-- `[CC-TIMEOUT] [<task-id>] ...` → Notify: "⏰ Question timed out, task may be stuck"
-- `[CC-IDLE] ...` → Notify: "⏸️ Waiting for input"
-- `[CC-PERMISSION] ...` → Notify: "🔐 Permission needed"
-
-## Quick Reference
-
-| Command | Description |
-|---------|-------------|
-| `cc <dir> <task>` | Start new Claude Code task |
-| `cc --topic <id> <dir> <task>` | Start task in specific topic |
-| `/answer <id> <text>` | Answer a question |
-| `/cc-status` | List active tasks |
-| `/cc-status <id>` | Get task details |
-| `/cc-stop <id>` | Stop a task |
-| `/cc-config` | Show notification settings |
-| `/cc-config quiet` | Only completion & errors |
-| `/cc-config minimal` | Start + completion + errors |
-| `/cc-config verbose` | All notifications |
-| `/cc-config set <key> <on/off>` | Toggle a setting |
+- `[CC-START]` — task started (already confirmed on dispatch, ignore)
+- `[CC-PROGRESS]` — forward to user if relevant
+- `[CC-COMPLETE]` — task finished, forward the summary
+- `[CC-ERROR]` — something failed, notify user
+- `[CC-QUESTION]` — Claude Code needs input, forward and tell user to `/answer`
+- `[CC-TIMEOUT]` — question timed out, notify user

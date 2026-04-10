@@ -1,181 +1,58 @@
 ---
-name: claude-code
-description: 'Dispatch Claude Code tasks from Telegram with auto forum topics. Triggers on: messages starting with "cc " or "claude-code ", "/answer", "/cc-status", "/cc-stop", "/cc-config". Each task creates a forum topic in the configured group with progress, questions, and completion updates.'
+name: cc
+description: 'Dispatch Claude Code tasks with bridge tracking, auto forum topics, progress notifications, and interactive Q&A. Use when: messages start with "cc " or "/cc ", user sends /answer, /cc-status, /cc-stop, /cc-config. NOT for: general coding questions (answer directly), simple one-liner fixes (just do it), or tasks the agent should handle itself.'
+user-invocable: true
 metadata:
-  openclaw:
-    emoji: "🤖"
-    requires:
-      anyBins: ["claude"]
+  {
+    "openclaw":
+      {
+        "emoji": "🤖",
+        "requires": { "anyBins": ["claude"] },
+      },
+  }
 ---
 
-# Claude Code Bridge Skill
+# Claude Code Bridge (`/cc`)
 
-This skill enables OpenClaw to dispatch and manage Claude Code tasks via Telegram.
+Dispatch Claude Code tasks from Telegram with full lifecycle tracking.
 
-## Triggers
+## When to Use This Skill
 
-Activate this skill when the user:
-- Sends a message starting with `cc ` or `claude-code `
-- Sends `/answer`, `/cc-status`, `/cc-stop`, or `/cc-config`
-- Asks about running development tasks in background
-- Wants to check status of Claude Code tasks
-- Needs to answer a Claude Code question
+**ALWAYS use this skill when:**
+- Message starts with `cc ` or `/cc ` (this is the bridge dispatch command)
+- User sends `/answer`, `/cc-status`, `/cc-stop`, or `/cc-config`
+- User asks to "run claude code on" or "dispatch to claude code"
+
+**NOT for:**
+- General coding questions (answer directly, no dispatch needed)
+- Simple one-liner fixes (just do it yourself)
+- Tasks you can handle without spawning a background agent
+- Thread-bound ACP harness requests (use `sessions_spawn`)
+
+## How It Works
+
+Each `/cc` task:
+1. Creates a **forum topic** in the configured Telegram group
+2. Spawns **Claude Code in background** via `dispatch.sh`
+3. Claude Code **hooks** send progress, questions, and completion to that topic
+4. User answers questions via `/answer` — the hook polls for the answer file
 
 ## Commands
 
-### Dispatch a task
+| Command | Action |
+|---------|--------|
+| `/cc <dir> <task>` | Dispatch a task (auto-creates topic) |
+| `/cc --topic <id> <dir> <task>` | Dispatch to a specific topic |
+| `/answer <id> <text>` | Answer a Claude Code question |
+| `/cc-status` | List active tasks |
+| `/cc-status <id>` | Get task details |
+| `/cc-stop <id>` | Stop a running task |
+| `/cc-config` | Show notification settings |
+| `/cc-config quiet\|minimal\|verbose` | Apply preset |
 
-```
-cc <directory> <prompt>
-claude-code --dir <directory> [options] <prompt>
-```
+## Critical Rules
 
-Options:
-- `--agent-teams` or `-t`: Enable Agent Teams mode
-- `--model <model>`: Specify model (default: claude-sonnet-4)
-- `--timeout <minutes>`: Set timeout (default: 60)
-
-Examples:
-```
-cc ~/projects/myapp implement user authentication
-cc /path/to/repo refactor the database layer with proper error handling
-claude-code --dir ~/work/api --agent-teams build a REST API for inventory management
-```
-
-### Answer a question
-
-When Claude Code asks a question, reply with:
-```
-/answer <question-id> <your answer>
-```
-
-Or reply directly to the question message.
-
-### Check status
-
-```
-/cc-status              # List all active tasks
-/cc-status <task-id>    # Get specific task details
-```
-
-### Stop a task
-
-```
-/cc-stop <task-id>      # Stop a running task
-```
-
-## Implementation
-
-### Dispatching Tasks
-
-When dispatching a task:
-
-1. Parse the command to extract:
-   - `directory`: The working directory for Claude Code
-   - `prompt`: The task description
-   - `options`: Any flags like --agent-teams
-
-2. Generate a task ID: `task-{timestamp}-{random}`
-
-3. Create task file at `~/.openclaw/cc-bridge/tasks/{task-id}.json`:
-```json
-{
-    "task_id": "task-1234567890-abc",
-    "prompt": "implement user authentication",
-    "cwd": "/Users/you/projects/myapp",
-    "options": {
-        "agent_teams": false,
-        "model": "claude-sonnet-4"
-    },
-    "status": "pending",
-    "created_at": "2026-04-10T10:00:00Z"
-}
-```
-
-4. Spawn Claude Code in background:
-```bash
-cd "<directory>" && \
-nohup claude --dangerously-skip-permissions \
-    -p "<prompt>" \
-    --output-format stream-json \
-    > ~/.openclaw/cc-bridge/logs/<task-id>.log 2>&1 &
-```
-
-5. Confirm to user: "✅ Task `{task-id}` started in `{directory}`"
-
-### Handling Events
-
-Monitor `~/.openclaw/cc-bridge/events/` for new event files.
-
-When `[CC-QUESTION]` wake event arrives:
-1. Find the question file in `~/.openclaw/cc-bridge/questions/`
-2. Format and send to Telegram:
-```
-🤔 Claude Code Question [task-id]
-─────────────────────────
-{question message}
-─────────────────────────
-Reply: /answer {question-id} <your response>
-Or reply directly to this message.
-```
-
-When `[CC] Session ended` arrives:
-1. Find the completed task in `~/.openclaw/cc-bridge/completed/`
-2. Send summary to Telegram:
-```
-✅ Task [{task-id}] completed
-Duration: 5m 23s
-Directory: /path/to/project
-```
-
-### Handling Answers
-
-When user replies with `/answer {question-id} {answer}`:
-
-1. Write answer file to `~/.openclaw/cc-bridge/answers/{question-id}.json`:
-```json
-{
-    "question_id": "q-1234567890",
-    "answer": "Use PostgreSQL with SQLAlchemy",
-    "status": "answered",
-    "answered_at": "2026-04-10T10:05:00Z"
-}
-```
-
-2. Confirm: "✅ Answer sent to Claude Code"
-
-The elicitation hook polling loop will pick up the answer file.
-
-### Environment Variables
-
-Gateway token and port are read automatically from `~/.openclaw/openclaw.json`.
-
-Optional overrides in `~/.openclaw/.env`:
-```
-CC_TELEGRAM_GROUP=-100xxxxxxxxxx   # Telegram group for notifications
-CC_BRIDGE_DIR=~/.openclaw/cc-bridge  # Override bridge data location
-CC_ELICITATION_TIMEOUT=270           # Question timeout in seconds
-```
-
-## File Locations
-
-- Tasks: `~/.openclaw/cc-bridge/tasks/`
-- Questions: `~/.openclaw/cc-bridge/questions/`
-- Answers: `~/.openclaw/cc-bridge/answers/`
-- Events: `~/.openclaw/cc-bridge/events/`
-- Logs: `~/.openclaw/cc-bridge/logs/`
-- Completed: `~/.openclaw/cc-bridge/completed/`
-
-## Error Handling
-
-- If Claude Code fails to start, notify user immediately
-- If task times out, send timeout notification
-- If question times out (5 min default), notify user
-- Clean up stale files older than 24 hours
-
-## Security Notes
-
-- Tasks run with `--dangerously-skip-permissions`
-- Only allow trusted users to dispatch tasks
-- Validate directory paths before use
-- Don't expose sensitive info in logs
+1. **ALWAYS use `dispatch.sh`** to spawn Claude Code — never run `claude` directly.
+   The bridge needs the task file for tracking, topic routing, and notification hooks.
+2. **Run dispatch.sh via the exec tool** with `background:true` (see CLAUDE.md for exact commands).
+3. **Parse `cc` messages carefully** — first arg after `cc` is the directory, rest is the prompt.
