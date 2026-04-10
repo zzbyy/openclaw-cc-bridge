@@ -1,7 +1,6 @@
 ---
 name: cc
-description: 'MANDATORY command router for /cc dispatch. When message starts with /cc or cc followed by a directory path, MUST run cc-entry.sh — never handle the coding task directly. Also handles /answer, /cc-status, /cc-stop, /cc-config.'
-user-invocable: true
+description: 'MANDATORY command router for /cc and cc dispatch. When message starts with /cc or cc followed by a directory path (~/ or /), MUST run cc-entry.sh via bash — never handle the coding task directly. Also handles /answer, /cc-status, /cc-stop, /cc-config commands via dedicated scripts.'
 metadata:
   {
     "openclaw":
@@ -16,28 +15,32 @@ metadata:
 
 ## MANDATORY ROUTING RULE
 
-When a message starts with `/cc ` or `cc ` followed by a path (like `~/...` or `/...`):
+When a message starts with `/cc ` or `cc ` followed by a path (`~/...` or `/...`):
 
-**You MUST run the dispatch script. You MUST NOT do the coding work yourself.**
+**You MUST run cc-entry.sh. You MUST NOT do the coding work yourself.**
 
 ```bash
-bash command:"~/.agents/skills/cc/scripts/cc-entry.sh <everything after /cc>"
+~/.agents/skills/cc/scripts/cc-entry.sh <everything after /cc>
 ```
 
 Example — user sends `/cc ~/myapp implement auth`:
 ```bash
-bash command:"~/.agents/skills/cc/scripts/cc-entry.sh ~/myapp implement auth"
+~/.agents/skills/cc/scripts/cc-entry.sh ~/myapp implement auth
 ```
 
-Then reply with the JSON output from the script.
+This spawns Claude Code in the background with task tracking, auto forum topic, progress notifications, and question forwarding.
 
 ## Other Commands
 
 | Message | Run this |
 |---------|----------|
-| `/answer <id> <text>` | `bash command:"~/.agents/skills/cc/scripts/answer.sh '<id>' '<text>'"` |
-| `/cc-status` | `bash command:"~/.agents/skills/cc/scripts/status.sh"` |
-| `/cc-status <id>` | `bash command:"~/.agents/skills/cc/scripts/status.sh '<id>'"` |
-| `/cc-stop <id>` | `bash command:"~/.agents/skills/cc/scripts/stop-task.sh '<id>'"` |
-| `/cc-config` | `bash command:"~/.agents/skills/cc/scripts/config.sh show"` |
-| `/cc-config <preset>` | `bash command:"~/.agents/skills/cc/scripts/config.sh <preset>"` |
+| `/answer <id> <text>` | `~/.agents/skills/cc/scripts/answer.sh '<id>' '<text>'` |
+| `/cc-status` | `~/.agents/skills/cc/scripts/status.sh` |
+| `/cc-status <id>` | `~/.agents/skills/cc/scripts/status.sh '<id>'` |
+| `/cc-stop <id>` | `~/.agents/skills/cc/scripts/stop-task.sh '<id>'` |
+| `/cc-config` | `~/.agents/skills/cc/scripts/config.sh show` |
+| `/cc-config <preset>` | `~/.agents/skills/cc/scripts/config.sh <preset>` |
+
+## Why cc-entry.sh?
+
+The dispatch script creates task tracking files, auto-creates Telegram forum topics, and spawns Claude Code with hooks that report progress back. If you run `claude` directly, none of the tracking or notification infrastructure works.
