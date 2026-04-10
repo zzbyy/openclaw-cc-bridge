@@ -247,6 +247,30 @@ OpenClaw should already have hooks enabled from initial setup. Verify:
 jq '.hooks' ~/.openclaw/openclaw.json
 ```
 
+You should see hooks enabled:
+
+```json
+{
+  "internal": {
+    "enabled": true,
+    "entries": {
+      "command-logger": {
+        "enabled": true
+      },
+      "session-memory": {
+        "enabled": true
+      }
+    }
+  }
+}
+```
+
+If `hooks` is missing or `enabled` is `false`, enable it:
+
+```bash
+openclaw configure
+```
+
 ### Step 7.2: Verify Claude Code Hooks
 
 Check that hooks are registered:
