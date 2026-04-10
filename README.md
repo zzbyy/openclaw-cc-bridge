@@ -17,9 +17,8 @@ Control Claude Code remotely via Telegram. Dispatch tasks, receive updates, answ
 # One-line install
 curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
 
-# Configure (edit these files)
-nano ~/.openclaw/.env          # Add OPENCLAW_GATEWAY_TOKEN and CC_TELEGRAM_GROUP
-nano ~/.openclaw/config.yaml   # Add your Telegram bot token
+# (Optional) Set Telegram group for targeted notifications
+echo 'CC_TELEGRAM_GROUP=-100xxxxxxxxxx' >> ~/.openclaw/.env
 
 # Start
 openclaw start
@@ -101,8 +100,8 @@ Phone (Telegram) → OpenClaw → Claude Code → Your Project
 
 ```
 ~/.openclaw/
-├── config.yaml              # OpenClaw config
-├── .env                     # Environment variables
+├── openclaw.json            # OpenClaw config (gateway token, telegram, etc.)
+├── .env                     # Optional overrides (CC_TELEGRAM_GROUP, etc.)
 ├── skills/claude-code/      # The skill that handles cc commands
 └── cc-bridge/               # Bridge data
     ├── config.json          # Notification settings

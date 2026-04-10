@@ -138,11 +138,13 @@ The elicitation hook polling loop will pick up the answer file.
 
 ### Environment Variables
 
-Required in `~/.openclaw/.env`:
+Gateway token and port are read automatically from `~/.openclaw/openclaw.json`.
+
+Optional overrides in `~/.openclaw/.env`:
 ```
-OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789
-OPENCLAW_GATEWAY_TOKEN=<your-gateway-token>
-CC_BRIDGE_DIR=~/.openclaw/cc-bridge
+CC_TELEGRAM_GROUP=-100xxxxxxxxxx   # Telegram group for notifications
+CC_BRIDGE_DIR=~/.openclaw/cc-bridge  # Override bridge data location
+CC_ELICITATION_TIMEOUT=270           # Question timeout in seconds
 ```
 
 ## File Locations

@@ -85,41 +85,42 @@ else
     warn "Skill directory not found, skipping"
 fi
 
-# 5. Configure environment
+# 5. Verify OpenClaw config
 echo ""
-echo "Configuring environment..."
-OPENCLAW_ENV="$HOME/.openclaw/.env"
+echo "Checking OpenClaw configuration..."
+OC_FILE="$HOME/.openclaw/openclaw.json"
 
-# Get gateway token
-GATEWAY_TOKEN=""
-if command -v openclaw &> /dev/null; then
-    # Try to get token from openclaw config
-    GATEWAY_TOKEN=$(openclaw config get hooks.token 2>/dev/null || echo "")
-fi
-
-if [ ! -f "$OPENCLAW_ENV" ]; then
-    touch "$OPENCLAW_ENV"
-fi
-
-# Add variables if not present
-add_env_var() {
-    local var="$1"
-    local value="$2"
-    if ! grep -q "^${var}=" "$OPENCLAW_ENV" 2>/dev/null; then
-        echo "${var}=${value}" >> "$OPENCLAW_ENV"
-        success "Added $var to .env"
+if [ -f "$OC_FILE" ]; then
+    # Check gateway token
+    OC_TOKEN=$(jq -r '.gateway.auth.token // empty' "$OC_FILE" 2>/dev/null)
+    if [ -n "$OC_TOKEN" ]; then
+        success "Gateway token found in openclaw.json"
     else
-        warn "$var already set in .env"
+        warn "No gateway token in openclaw.json — run: openclaw configure"
     fi
-}
 
-add_env_var "OPENCLAW_GATEWAY_URL" "http://127.0.0.1:18789"
-add_env_var "CC_BRIDGE_DIR" "$BRIDGE_DIR"
-
-if [ -n "$GATEWAY_TOKEN" ]; then
-    add_env_var "OPENCLAW_GATEWAY_TOKEN" "$GATEWAY_TOKEN"
+    # Check telegram channel
+    TG_ENABLED=$(jq -r '.channels.telegram.enabled // false' "$OC_FILE" 2>/dev/null)
+    if [ "$TG_ENABLED" = "true" ]; then
+        success "Telegram channel enabled"
+    else
+        warn "Telegram not enabled — run: openclaw configure"
+    fi
 else
-    warn "Gateway token not found. Please add OPENCLAW_GATEWAY_TOKEN to $OPENCLAW_ENV"
+    warn "openclaw.json not found — run: openclaw configure"
+fi
+
+# Check if CC_TELEGRAM_GROUP is set (needed for targeting notifications)
+if [ -z "${CC_TELEGRAM_GROUP:-}" ]; then
+    # Check .env file too
+    OPENCLAW_ENV="$HOME/.openclaw/.env"
+    if [ -f "$OPENCLAW_ENV" ] && grep -q "^CC_TELEGRAM_GROUP=" "$OPENCLAW_ENV" 2>/dev/null; then
+        success "CC_TELEGRAM_GROUP found in .env"
+    else
+        warn "CC_TELEGRAM_GROUP not set — add to ~/.openclaw/.env for targeted notifications"
+    fi
+else
+    success "CC_TELEGRAM_GROUP is set"
 fi
 
 # 6. Print summary
@@ -128,25 +129,17 @@ echo "━━━━━━━━━━━━━━━━━━━━━━━━�
 echo -e "${GREEN}Installation complete!${NC}"
 echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
 echo ""
+echo "Gateway token and port are read from ~/.openclaw/openclaw.json automatically."
+echo ""
 echo "Next steps:"
 echo ""
-echo "1. Add to ~/.openclaw/.env:"
-echo "   OPENCLAW_GATEWAY_TOKEN=your-gateway-token"
-echo "   CC_TELEGRAM_GROUP=-100xxxxxxxxxx  # Your Telegram group ID"
+echo "1. (Optional) Set Telegram group for targeted notifications:"
+echo "   echo 'CC_TELEGRAM_GROUP=-100xxxxxxxxxx' >> ~/.openclaw/.env"
 echo ""
-echo "2. Load environment (add to ~/.zshrc or ~/.bashrc):"
-echo '   if [ -f ~/.openclaw/.env ]; then'
-echo '       set -a; source ~/.openclaw/.env; set +a'
-echo '   fi'
-echo ""
-echo "3. Enable hooks in OpenClaw:"
-echo '   openclaw config set hooks.enabled true'
-echo '   openclaw config set hooks.token "your-gateway-token"'
-echo ""
-echo "4. Start/restart OpenClaw:"
+echo "2. Start/restart OpenClaw:"
 echo "   openclaw start"
 echo ""
-echo "5. Test via Telegram:"
+echo "3. Test via Telegram:"
 echo "   cc ~/test-folder create a hello.py that prints hello world"
 echo ""
 echo "For detailed setup instructions, see WALKTHROUGH.md"

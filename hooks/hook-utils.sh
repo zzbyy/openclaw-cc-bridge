@@ -2,12 +2,23 @@
 # hook-utils.sh - Shared utilities for Claude Code hooks
 # Source this file in other hooks: source ~/.claude/hooks/hook-utils.sh
 
+# Read a value from openclaw.json (falls back to empty string)
+_oc_config() {
+    local key="$1"
+    local oc_file="$HOME/.openclaw/openclaw.json"
+    [ -f "$oc_file" ] && jq -r "$key // empty" "$oc_file" 2>/dev/null || echo ""
+}
+
 # Bridge directory
 export BRIDGE_DIR="${CC_BRIDGE_DIR:-$HOME/.openclaw/cc-bridge}"
-export GATEWAY_URL="${OPENCLAW_GATEWAY_URL:-http://127.0.0.1:18789}"
-export GATEWAY_TOKEN="${OPENCLAW_GATEWAY_TOKEN:-}"
 
-# Telegram group/channel for notifications (e.g., "-1001234567890" or "my-dev-channel")
+# Gateway — read from openclaw.json, env vars override
+_OC_PORT=$(_oc_config '.gateway.port')
+_OC_TOKEN=$(_oc_config '.gateway.auth.token')
+export GATEWAY_URL="${OPENCLAW_GATEWAY_URL:-http://127.0.0.1:${_OC_PORT:-18789}}"
+export GATEWAY_TOKEN="${OPENCLAW_GATEWAY_TOKEN:-$_OC_TOKEN}"
+
+# Telegram group/channel for notifications — env var or bridge config
 export TELEGRAM_GROUP="${CC_TELEGRAM_GROUP:-}"
 
 # Config file for notification settings

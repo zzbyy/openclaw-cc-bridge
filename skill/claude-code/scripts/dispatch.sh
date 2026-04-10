@@ -72,8 +72,16 @@ if [ ! -d "$WORKDIR" ]; then
 fi
 WORKDIR=$(cd "$WORKDIR" && pwd)
 
-# Bridge directory
+# Read from openclaw.json, env vars override
+OC_FILE="$HOME/.openclaw/openclaw.json"
+_oc_config() { [ -f "$OC_FILE" ] && jq -r "$1 // empty" "$OC_FILE" 2>/dev/null || echo ""; }
+
 BRIDGE_DIR="${CC_BRIDGE_DIR:-$HOME/.openclaw/cc-bridge}"
+_OC_PORT=$(_oc_config '.gateway.port')
+_OC_TOKEN=$(_oc_config '.gateway.auth.token')
+export OPENCLAW_GATEWAY_URL="${OPENCLAW_GATEWAY_URL:-http://127.0.0.1:${_OC_PORT:-18789}}"
+export OPENCLAW_GATEWAY_TOKEN="${OPENCLAW_GATEWAY_TOKEN:-$_OC_TOKEN}"
+
 mkdir -p "$BRIDGE_DIR/tasks" "$BRIDGE_DIR/logs"
 
 # Generate task ID

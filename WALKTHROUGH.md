@@ -212,22 +212,20 @@ cp ~/.claude/settings.json ~/.claude/settings.json.backup
 
 ## 6. Configure Environment Variables
 
-### Step 6.1: Create Environment File
+The bridge reads your gateway token and port directly from `~/.openclaw/openclaw.json`,
+so you don't need to duplicate them. The only thing you may want to set is the Telegram
+group ID for targeted notifications.
+
+### Step 6.1: (Optional) Set Telegram Group Target
+
+If you want notifications sent to a specific Telegram group:
 
 ```bash
-cat >> ~/.openclaw/.env << 'EOF'
-# OpenClaw Gateway
-OPENCLAW_GATEWAY_URL=http://127.0.0.1:18789
-OPENCLAW_GATEWAY_TOKEN=your-secure-gateway-token
-
-# Claude Code Bridge
-CC_BRIDGE_DIR=~/.openclaw/cc-bridge
-CC_ELICITATION_TIMEOUT=300
-
-# Telegram Target (your group/channel ID)
-CC_TELEGRAM_GROUP=-100xxxxxxxxxx
-EOF
+echo 'CC_TELEGRAM_GROUP=-100xxxxxxxxxx' >> ~/.openclaw/.env
 ```
+
+To find your group ID: send a message in the group, then visit
+`https://api.telegram.org/bot<YOUR_TOKEN>/getUpdates` and look for `"chat":{"id":-100...}`.
 
 ### Step 6.2: Load Environment
 
@@ -247,11 +245,14 @@ Reload your shell:
 source ~/.zshrc  # or ~/.bashrc
 ```
 
-### Step 6.3: Verify Environment
+### Step 6.3: Verify Configuration
 
 ```bash
-echo $OPENCLAW_GATEWAY_URL
-echo $CC_TELEGRAM_GROUP
+# Gateway token should exist in openclaw.json
+jq '.gateway.auth.token' ~/.openclaw/openclaw.json
+
+# Telegram should be enabled
+jq '.channels.telegram.enabled' ~/.openclaw/openclaw.json
 ```
 
 ---
@@ -260,9 +261,10 @@ echo $CC_TELEGRAM_GROUP
 
 ### Step 7.1: Configure OpenClaw to Accept Hook Calls
 
+OpenClaw should already have hooks enabled from initial setup. Verify:
+
 ```bash
-openclaw config set hooks.enabled true
-openclaw config set hooks.token "your-secure-gateway-token"
+jq '.hooks' ~/.openclaw/openclaw.json
 ```
 
 ### Step 7.2: Verify Claude Code Hooks
