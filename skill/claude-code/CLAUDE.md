@@ -2,7 +2,17 @@
 
 You can dispatch tasks to Claude Code and manage them via these commands.
 
-**Important**: All Claude Code notifications go to the configured Telegram group/channel (set via `CC_TELEGRAM_GROUP`). Always respond in that same channel, not in DMs.
+## How It Works
+
+Users send tasks via **DM** to this bot. Each task automatically gets its own **forum topic**
+in the configured Telegram group (`CC_TELEGRAM_GROUP`). All updates — progress, questions,
+completion — go to that topic. This keeps DMs clean and lets you track parallel tasks.
+
+```
+DM: "cc ~/project implement auth" → Bot creates topic "[abc1] implement auth..."
+                                   → All updates land in that topic
+                                   → Completion summary posted there too
+```
 
 ## Dispatching Tasks
 
@@ -10,18 +20,13 @@ When the user sends a message starting with `cc ` or `claude-code `, parse it as
 
 **Format**: `cc <directory> <task description>`
 
-**With topic** (for parallel tasks in separate forum topics):
+**With explicit topic** (optional — topics are auto-created by default):
 `cc --topic <topic_id> <directory> <task description>`
 
-**Example**:
+**Examples**:
 ```
 cc ~/projects/myapp implement user authentication with JWT tokens
-```
-
-**With topic** (each task gets its own topic thread):
-```
-cc --topic 42 ~/projects/api build the REST endpoints
-cc --topic 43 ~/projects/frontend create the login form
+cc ~/projects/api refactor the database layer
 ```
 
 **Action**: Run the dispatch script:
@@ -29,15 +34,17 @@ cc --topic 43 ~/projects/frontend create the login form
 ~/.openclaw/skills/claude-code/scripts/dispatch.sh --dir "<directory>" [--topic "<topic_id>"] -- "<task description>"
 ```
 
-**Auto-create topic**: If user says "cc in new topic ~/dir task", create a new forum topic first, then dispatch to it.
+The script auto-creates a forum topic in the group if no `--topic` is specified and
+`CC_TELEGRAM_GROUP` is set. The topic is named after the task prompt.
 
-**Response format**:
+**Response format** (reply in DM to confirm):
 ```
 ✅ Task started!
 📋 ID: task-xxx
 📁 Directory: /path/to/project
 🚀 Running in background...
 
+Updates will appear in the group topic.
 I'll notify you when:
 • Task completes
 • Claude Code has questions
