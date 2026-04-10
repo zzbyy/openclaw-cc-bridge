@@ -1,15 +1,22 @@
 # OpenClaw + Claude Code + Telegram Bridge
 
-Control Claude Code remotely via Telegram. Dispatch tasks, receive updates, answer questions — all from your phone.
+Control Claude Code remotely via Telegram. DM tasks to your bot, get updates in organized forum topics.
 
-## Features
+## How It Works
 
-- 🚀 **Dispatch tasks** from Telegram → Claude Code runs in background
-- 📊 **Progress updates** as files are created, tests run, etc.
-- 🤔 **Interactive Q&A** — Claude Code questions forwarded to you
-- ✅ **Completion summaries** with files changed and results
-- 🔀 **Parallel tasks** in separate forum topics
-- ⚙️ **Configurable notifications** — quiet, minimal, or verbose
+```
+You (DM) ──► OpenClaw bot ──► Claude Code runs in background
+                  │                     │
+                  │              hooks fire on events
+                  │                     │
+                  └──── Group topic ◄───┘
+                    (progress, questions, completion)
+```
+
+1. DM your bot: `cc ~/project implement auth`
+2. A forum topic is auto-created in your group
+3. Progress, questions, and completion go to that topic
+4. Each task gets its own topic -- parallel tasks stay organized
 
 ## Quick Start
 
@@ -17,24 +24,24 @@ Control Claude Code remotely via Telegram. Dispatch tasks, receive updates, answ
 # One-line install
 curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
 
-# (Optional) Set Telegram group for targeted notifications
+# Set your Telegram group for task topics
 echo 'CC_TELEGRAM_GROUP=-100xxxxxxxxxx' >> ~/.openclaw/.env
 
-# Start
-openclaw start
+# Restart the gateway
+openclaw gateway --force
 
-# Test (send in Telegram)
+# DM your bot in Telegram
 cc ~/test-folder create a hello.py that prints hello world
 ```
 
-**📖 See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup instructions.**
+See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 
 ## Commands
 
 | Command | Description |
 |---------|-------------|
-| `cc <dir> <task>` | Start a task |
-| `cc --topic <id> <dir> <task>` | Start task in forum topic |
+| `cc <dir> <task>` | Start a task (auto-creates forum topic) |
+| `cc --topic <id> <dir> <task>` | Start task in a specific topic |
 | `/answer <id> <text>` | Answer a question |
 | `/cc-status` | List active tasks |
 | `/cc-stop <id>` | Stop a task |
@@ -44,7 +51,14 @@ cc ~/test-folder create a hello.py that prints hello world
 
 ## What You'll See
 
-**Task started:**
+**In your DM** (confirmation):
+```
+Task started! ID: task-abc123
+Running in ~/projects/myapp
+Updates in group topic.
+```
+
+**In the group topic** (progress):
 ```
 🚀 Task started [task-abc123]
 ━━━━━━━━━━━━━━━━━━━━━
@@ -53,14 +67,13 @@ cc ~/test-folder create a hello.py that prints hello world
 ━━━━━━━━━━━━━━━━━━━━━
 ```
 
-**Progress:**
 ```
 📄 Created auth.py
 📦 pip install bcrypt
 🧪 Running tests...
 ```
 
-**Question:**
+**Question** (in topic):
 ```
 🤔 Claude Code Question
 ━━━━━━━━━━━━━━━━━━━━━
@@ -69,7 +82,7 @@ Should I use JWT or sessions?
 Reply: /answer q-xxx <your answer>
 ```
 
-**Completed:**
+**Completion** (in topic):
 ```
 ✅ Task completed [task-abc123]
 ━━━━━━━━━━━━━━━━━━━━━
@@ -86,14 +99,6 @@ Reply: /answer q-xxx <your answer>
 Implemented JWT authentication with login/logout.
 All tests passing.
 ━━━━━━━━━━━━━━━━━━━━━
-```
-
-## Architecture
-
-```
-Phone (Telegram) → OpenClaw → Claude Code → Your Project
-                      ↑            │
-                      └── hooks ───┘
 ```
 
 ## Files
@@ -127,24 +132,24 @@ Phone (Telegram) → OpenClaw → Claude Code → Your Project
 **No response from bot?**
 ```bash
 openclaw status
-openclaw logs --follow
+openclaw gateway --force  # restart the gateway
 ```
 
 **Hooks not firing?**
 ```bash
-cat ~/.claude/settings.json | jq '.hooks'
+jq '.hooks' ~/.claude/settings.json
 ls -la ~/.claude/hooks/
 ```
 
 **Questions timing out?**
 ```bash
-export CC_ELICITATION_TIMEOUT=600
+echo 'CC_ELICITATION_TIMEOUT=600' >> ~/.openclaw/.env
 tail -f ~/.openclaw/cc-bridge/logs/hooks.log
 ```
 
 ## Updating
 
-Re-run the installer — it's idempotent (replaces old bridge hooks, preserves your other hooks):
+Re-run the installer -- it's idempotent (replaces old bridge hooks, preserves your other hooks):
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
@@ -152,6 +157,6 @@ curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remot
 
 ## Security
 
-- Tasks use `--dangerously-skip-permissions` — dispatch only trusted tasks
-- Keep `OPENCLAW_GATEWAY_TOKEN` secret
+- Tasks use `--dangerously-skip-permissions` -- dispatch only trusted tasks
+- Gateway token is read from `openclaw.json` -- keep it secret
 - Gateway runs on localhost only by default
