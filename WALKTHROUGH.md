@@ -164,18 +164,19 @@ Send a message to your bot in Telegram. You should see it in the logs.
 
 ## 5. Install the Bridge
 
-### Step 5.1: Extract the Bridge Files
+### Step 5.1: Install the Bridge
+
+**One-line install (recommended):**
 
 ```bash
-# Navigate to where you downloaded the zip
-cd ~/Downloads
+curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
+```
 
-# Extract
-unzip openclaw-claude-code-bridge.zip
+**Or clone and install manually:**
 
-# Run the installer
-cd openclaw-claude-code-bridge
-chmod +x install.sh
+```bash
+git clone https://github.com/zzbyy/openclaw-cc-bridge.git
+cd openclaw-cc-bridge
 ./install.sh
 ```
 

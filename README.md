@@ -14,10 +14,8 @@ Control Claude Code remotely via Telegram. Dispatch tasks, receive updates, answ
 ## Quick Start
 
 ```bash
-# Extract and install
-unzip openclaw-claude-code-bridge.zip
-cd openclaw-claude-code-bridge
-./install.sh
+# One-line install
+curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
 
 # Configure (edit these files)
 nano ~/.openclaw/.env          # Add OPENCLAW_GATEWAY_TOKEN and CC_TELEGRAM_GROUP
