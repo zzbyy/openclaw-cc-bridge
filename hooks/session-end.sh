@@ -39,9 +39,10 @@ TOOL_CALLS=$(echo "$TRACKING" | jq -r '.tool_calls // 0')
 DURATION_STR="unknown"
 if [ -n "$STARTED_AT" ]; then
     # Strip trailing Z and fractional seconds for macOS date parsing
+    # Force UTC (TZ=UTC) — stored timestamps are UTC, macOS date -j parses in local time
     CLEAN_TS="${STARTED_AT%%Z}"
     CLEAN_TS="${CLEAN_TS%%.*}"
-    START_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$CLEAN_TS" +%s 2>/dev/null || \
+    START_EPOCH=$(TZ=UTC date -j -f "%Y-%m-%dT%H:%M:%S" "$CLEAN_TS" +%s 2>/dev/null || \
                   date -d "${STARTED_AT}" +%s 2>/dev/null || echo "")
     if [ -n "$START_EPOCH" ]; then
         NOW_EPOCH=$(date +%s)
