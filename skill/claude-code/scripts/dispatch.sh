@@ -9,7 +9,7 @@ set -e
 # Defaults
 WORKDIR=""
 AGENT_TEAMS=false
-MODEL="claude-sonnet-4"
+MODEL=""
 TIMEOUT_MINUTES=60
 TOPIC=""
 PROMPT=""
@@ -138,7 +138,10 @@ nohup bash -c '
     if [ "$CC_TASK_AGENT_TEAMS" = "true" ]; then
         CC_CMD+=(--teammate-mode auto)
     fi
-    CC_CMD+=(--model "$CC_TASK_MODEL" -p "$CC_TASK_PROMPT" --output-format stream-json)
+    if [ -n "$CC_TASK_MODEL" ]; then
+        CC_CMD+=(--model "$CC_TASK_MODEL")
+    fi
+    CC_CMD+=(-p "$CC_TASK_PROMPT" --output-format stream-json --verbose)
 
     # Run Claude Code
     "${CC_CMD[@]}" 2>&1 | tee "$CC_TASK_LOG_FILE"
