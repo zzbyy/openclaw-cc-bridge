@@ -131,6 +131,8 @@ get_task_id() {
 }
 
 # Send wake event to OpenClaw via `openclaw system event`
+# Runs in background (&) because openclaw CLI takes ~6s to boot (Node.js),
+# which exceeds the 5s hook timeout.
 # Usage: send_wake "message" [mode] [task_id]
 send_wake() {
     local message="$1"
@@ -142,7 +144,7 @@ send_wake() {
             --text "$message" \
             --mode "$mode" \
             --token "$GATEWAY_TOKEN" \
-            > /dev/null 2>&1 || true
+            > /dev/null 2>&1 &
     fi
 }
 
