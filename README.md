@@ -1,22 +1,28 @@
 # OpenClaw + Claude Code + Telegram Bridge
 
-Control Claude Code remotely via Telegram. Send tasks in a group topic, get progress and results right there.
+Control Claude Code remotely via Telegram. Send tasks in a DM or group topic, get progress and results right there.
 
 ## How It Works
 
 ```
-Group topic ──► OpenClaw bot ──► Claude Code runs in background
-     ▲                                   │
-     │                            hooks fire on events
-     │                                   │
-     └───────── notifications ◄──────────┘
-        (progress, questions, completion)
+Telegram (DM or group topic)
+     │
+     ▼
+OpenClaw bot ──► Claude Code runs in background
+     ▲                     │
+     │              hooks fire on events
+     │                     │
+     └── notifications ◄───┘
+   (progress, questions, completion)
 ```
 
-1. Create a topic in your Telegram group for the task
-2. Send `/cc ~/project implement auth` in that topic
-3. Claude Code runs in background
-4. Progress, questions, and completion come back to the same topic
+1. Send `/cc ~/project implement auth` to your bot (DM or group topic)
+2. Claude Code runs in background
+3. Progress, questions, and completion come back to the same conversation
+
+**Two ways to use it:**
+- **DM chat** -- message the bot directly, notifications come back in the DM
+- **Group topic** -- send in a forum topic, notifications come back to that topic (great for organizing parallel tasks)
 
 ## Quick Start
 
@@ -24,13 +30,10 @@ Group topic ──► OpenClaw bot ──► Claude Code runs in background
 # One-line install
 curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
 
-# Set your Telegram group
-echo 'CC_TELEGRAM_GROUP=-100xxxxxxxxxx' >> ~/.openclaw/.env
-
 # Restart the gateway
-openclaw gateway --force
+openclaw gateway restart
 
-# In a Telegram group topic, send:
+# Send to your bot in Telegram (DM or group topic):
 /cc ~/test-folder create a hello.py that prints hello world
 ```
 
@@ -40,7 +43,7 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 
 | Command | Description |
 |---------|-------------|
-| `/cc <dir> <task>` | Start a task in the current topic |
+| `/cc <dir> <task>` | Start a task |
 | `/answer <id> <text>` | Answer a question |
 | `/cc-status` | List active tasks |
 | `/cc-stop <id>` | Stop a task |
@@ -50,7 +53,7 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 
 ## What You'll See
 
-**In your topic** (progress):
+**Task started:**
 ```
 🚀 Task started [task-abc123]
 ━━━━━━━━━━━━━━━━━━━━━
@@ -59,6 +62,7 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 ━━━━━━━━━━━━━━━━━━━━━
 ```
 
+**Progress:**
 ```
 [CC-PROGRESS] [task-abc123] 📄 Created auth.py
 [CC-PROGRESS] [task-abc123] 📦 pip install bcrypt
@@ -66,7 +70,7 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 [CC-PROGRESS] [task-abc123] ✓ Ran: python3 test_auth.py (10 steps)
 ```
 
-**Question** (in topic):
+**Question:**
 ```
 🤔 Claude Code Question
 ━━━━━━━━━━━━━━━━━━━━━
@@ -75,7 +79,7 @@ Should I use JWT or sessions?
 Reply: /answer q-xxx <your answer>
 ```
 
-**Completion** (in topic):
+**Completion:**
 ```
 ✅ Task completed [task-abc123]
 ━━━━━━━━━━━━━━━━━━━━━
@@ -128,7 +132,7 @@ All tests passing.
 **No response from bot?**
 ```bash
 openclaw status
-openclaw gateway --force  # restart the gateway
+openclaw gateway restart
 ```
 
 **Hooks not firing?**
