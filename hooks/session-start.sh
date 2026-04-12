@@ -60,9 +60,9 @@ if [ -n "$TASK_FILE" ] && [ -f "$TASK_FILE" ]; then
 }
 EOF
 
-    # Send notification if enabled
+    # Send rich notification if enabled
     if is_enabled "start"; then
-        send_wake "[CC-START] $TASK_ID" "now" "$TASK_ID"
+        send_wake "$MESSAGE" "now" "$TASK_ID"
     fi
 fi
 

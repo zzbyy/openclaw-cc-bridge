@@ -38,7 +38,10 @@ TOOL_CALLS=$(echo "$TRACKING" | jq -r '.tool_calls // 0')
 # Calculate duration
 DURATION_STR="unknown"
 if [ -n "$STARTED_AT" ]; then
-    START_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%S" "${STARTED_AT%%.*}" +%s 2>/dev/null || \
+    # Strip trailing Z and fractional seconds for macOS date parsing
+    CLEAN_TS="${STARTED_AT%%Z}"
+    CLEAN_TS="${CLEAN_TS%%.*}"
+    START_EPOCH=$(date -j -f "%Y-%m-%dT%H:%M:%S" "$CLEAN_TS" +%s 2>/dev/null || \
                   date -d "${STARTED_AT}" +%s 2>/dev/null || echo "")
     if [ -n "$START_EPOCH" ]; then
         NOW_EPOCH=$(date +%s)
@@ -87,10 +90,11 @@ $e"
 fi
 
 # Determine status emoji and label
+# Claude Code sends "other" for normal --print mode completion
 STATUS_EMOJI="✅"
 STATUS_LABEL="completed"
 case "$REASON" in
-    exit)
+    exit|other|unknown)
         STATUS_EMOJI="✅"
         STATUS_LABEL="completed"
         ;;
@@ -115,11 +119,10 @@ MESSAGE="$STATUS_EMOJI Task $STATUS_LABEL [$TASK_ID]
 ⏱️ $DURATION_STR"
 
 # Add file changes if any
-if [ -n "$FILE_CHANGES" ]; then
-    # Build file list properly
+if [ "$TOTAL_FILES" -gt 0 ]; then
     CREATED_LIST=""
     MODIFIED_LIST=""
-    
+
     if [ "$CREATED_COUNT" -gt 0 ]; then
         CREATED_LIST=$(echo "$FILES_CREATED" | jq -r '.[:5][]' | while read f; do
             echo "   + $(basename "$f") (new)"
@@ -129,7 +132,7 @@ if [ -n "$FILE_CHANGES" ]; then
    + ...and $((CREATED_COUNT - 5)) more"
         fi
     fi
-    
+
     if [ "$MODIFIED_COUNT" -gt 0 ]; then
         MODIFIED_LIST=$(echo "$FILES_MODIFIED" | jq -r '.[:5][]' | while read f; do
             echo "   ~ $(basename "$f") (modified)"
@@ -139,7 +142,7 @@ if [ -n "$FILE_CHANGES" ]; then
    ~ ...and $((MODIFIED_COUNT - 5)) more"
         fi
     fi
-    
+
     MESSAGE="$MESSAGE
 
 📄 Files changed ($TOTAL_FILES):
@@ -236,7 +239,7 @@ EOF
 
 # Send wake with completion (if enabled)
 if is_enabled "complete"; then
-    send_wake "[CC-COMPLETE] $TASK_ID $STATUS_LABEL" "now" "$TASK_ID"
+    send_wake "$MESSAGE" "now" "$TASK_ID"
 fi
 
 log_hook "SessionEnd: task=$TASK_ID status=$STATUS_LABEL reason=$REASON duration=$DURATION_STR files=$TOTAL_FILES errors=$ERROR_COUNT"
