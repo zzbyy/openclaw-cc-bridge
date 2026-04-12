@@ -130,22 +130,39 @@ get_task_id() {
     basename "$1" .json
 }
 
-# Send wake event to OpenClaw via `openclaw system event`
-# Runs in background (&) because openclaw CLI takes ~6s to boot (Node.js),
-# which exceeds the 5s hook timeout.
+# Send notification to Telegram via `openclaw message send`
+# Runs in background (&) because the CLI takes ~4s to boot.
 # Usage: send_wake "message" [mode] [task_id]
 send_wake() {
     local message="$1"
     local mode="${2:-now}"
     local task_id="${3:-}"
 
-    if [ -n "$GATEWAY_TOKEN" ] && command -v openclaw &>/dev/null; then
-        openclaw system event \
-            --text "$message" \
-            --mode "$mode" \
-            --token "$GATEWAY_TOKEN" \
-            > /dev/null 2>&1 &
+    command -v openclaw &>/dev/null || return
+
+    # Determine target: task-specific topic > default group
+    local target="$TELEGRAM_GROUP"
+    local thread_args=()
+
+    if [ -n "$task_id" ]; then
+        local task_file="$BRIDGE_DIR/tasks/${task_id}.json"
+        [ ! -f "$task_file" ] && task_file="$BRIDGE_DIR/completed/${task_id}.json"
+        if [ -f "$task_file" ]; then
+            local ch=$(jq -r '.target_channel // empty' "$task_file" 2>/dev/null)
+            local tp=$(jq -r '.target_topic // empty' "$task_file" 2>/dev/null)
+            [ -n "$ch" ] && target="$ch"
+            [ -n "$tp" ] && thread_args=(--thread-id "$tp")
+        fi
     fi
+
+    [ -z "$target" ] && return
+
+    openclaw message send \
+        --channel telegram \
+        --target "$target" \
+        "${thread_args[@]}" \
+        --message "$message" \
+        > /dev/null 2>&1 &
 }
 
 # Log to hook log file

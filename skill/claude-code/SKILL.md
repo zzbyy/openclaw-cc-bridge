@@ -19,16 +19,22 @@ When a message starts with `/cc ` or `cc ` followed by a path (`~/...` or `/...`
 
 **You MUST run cc-entry.sh. You MUST NOT do the coding work yourself.**
 
+**If the conversation metadata contains `topic_id`, you MUST pass it as `--topic`** so notifications go back to this topic.
+
 ```bash
-~/.agents/skills/cc/scripts/cc-entry.sh <everything after /cc>
+# With topic_id from metadata:
+~/.agents/skills/cc/scripts/cc-entry.sh --topic <topic_id> <dir> <task>
+
+# Without topic_id:
+~/.agents/skills/cc/scripts/cc-entry.sh <dir> <task>
 ```
 
-Example — user sends `/cc ~/myapp implement auth`:
+Example — user sends `/cc ~/myapp implement auth` in topic 50:
 ```bash
-~/.agents/skills/cc/scripts/cc-entry.sh ~/myapp implement auth
+~/.agents/skills/cc/scripts/cc-entry.sh --topic 50 ~/myapp implement auth
 ```
 
-This spawns Claude Code in the background with task tracking, progress notifications, and question forwarding. Notifications come back to the same topic where the command was sent.
+This spawns Claude Code in the background with task tracking and progress notifications sent back to this topic.
 
 ## Other Commands
 
