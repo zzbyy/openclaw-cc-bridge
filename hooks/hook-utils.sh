@@ -130,34 +130,18 @@ get_task_id() {
     basename "$1" .json
 }
 
-# Send wake event to OpenClaw with optional channel/topic targeting
+# Send wake event to OpenClaw via `openclaw system event`
 # Usage: send_wake "message" [mode] [task_id]
 send_wake() {
     local message="$1"
     local mode="${2:-now}"
     local task_id="${3:-}"
-    
-    if [ -n "$GATEWAY_TOKEN" ]; then
-        # Determine target: task-specific topic > default group
-        local target=""
-        if [ -n "$task_id" ]; then
-            target=$(get_task_target "$task_id")
-        fi
-        [ -z "$target" ] && target="$TELEGRAM_GROUP"
-        
-        # Build JSON payload
-        local payload="{\"text\":$(echo "$message" | jq -Rs .),\"mode\":\"$mode\""
-        
-        if [ -n "$target" ]; then
-            payload="$payload,\"channel\":\"telegram\",\"to\":\"$target\""
-        fi
-        
-        payload="$payload}"
-        
-        curl -s -X POST "$GATEWAY_URL/hooks/wake" \
-            -H "Authorization: Bearer $GATEWAY_TOKEN" \
-            -H "Content-Type: application/json" \
-            -d "$payload" \
+
+    if [ -n "$GATEWAY_TOKEN" ] && command -v openclaw &>/dev/null; then
+        openclaw system event \
+            --text "$message" \
+            --mode "$mode" \
+            --token "$GATEWAY_TOKEN" \
             > /dev/null 2>&1 || true
     fi
 }
