@@ -60,9 +60,10 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 ```
 
 ```
-📄 Created auth.py
-📦 pip install bcrypt
-🧪 Running tests...
+[CC-PROGRESS] [task-abc123] 📄 Created auth.py
+[CC-PROGRESS] [task-abc123] 📦 pip install bcrypt
+[CC-PROGRESS] [task-abc123] 🧪 Running tests...
+[CC-PROGRESS] [task-abc123] ✓ Ran: python3 test_auth.py (10 steps)
 ```
 
 **Question** (in topic):
@@ -90,6 +91,8 @@ Reply: /answer q-xxx <your answer>
 📋 Summary:
 Implemented JWT authentication with login/logout.
 All tests passing.
+
+💰 ~10k tokens (est.)
 ━━━━━━━━━━━━━━━━━━━━━
 ```
 
