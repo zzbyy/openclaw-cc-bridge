@@ -89,29 +89,7 @@ mkdir -p "$BRIDGE_DIR/tasks" "$BRIDGE_DIR/logs"
 
 # Generate task ID
 TASK_ID="task-$(date +%s)-$(openssl rand -hex 4)"
-
-# Auto-create forum topic if no --topic given and group is configured
 TELEGRAM_GROUP="${CC_TELEGRAM_GROUP:-}"
-if [ -z "$TOPIC" ] && [ -n "$TELEGRAM_GROUP" ]; then
-    BOT_TOKEN=$(_oc_config '.channels.telegram.botToken')
-    if [ -n "$BOT_TOKEN" ]; then
-        # Topic name: first 40 chars of prompt + task short ID
-        SHORT_ID="${TASK_ID##*-}"
-        TOPIC_NAME=$(echo "$PROMPT" | head -c 40 | tr '\n' ' ')
-        [ ${#PROMPT} -gt 40 ] && TOPIC_NAME="${TOPIC_NAME}..."
-        TOPIC_NAME="[$SHORT_ID] $TOPIC_NAME"
-
-        TOPIC_RESULT=$(curl -s -X POST "https://api.telegram.org/bot${BOT_TOKEN}/createForumTopic" \
-            -H "Content-Type: application/json" \
-            -d "$(jq -n --arg cid "$TELEGRAM_GROUP" --arg name "$TOPIC_NAME" \
-                '{chat_id: ($cid | tonumber), name: $name}')" 2>/dev/null)
-
-        CREATED_TOPIC=$(echo "$TOPIC_RESULT" | jq -r '.result.message_thread_id // empty' 2>/dev/null)
-        if [ -n "$CREATED_TOPIC" ]; then
-            TOPIC="$CREATED_TOPIC"
-        fi
-    fi
-fi
 
 # Create task file (use jq for safe JSON construction)
 TASK_FILE="$BRIDGE_DIR/tasks/${TASK_ID}.json"

@@ -28,7 +28,7 @@ Example — user sends `/cc ~/myapp implement auth`:
 ~/.agents/skills/cc/scripts/cc-entry.sh ~/myapp implement auth
 ```
 
-This spawns Claude Code in the background with task tracking, auto forum topic, progress notifications, and question forwarding.
+This spawns Claude Code in the background with task tracking, progress notifications, and question forwarding. Notifications come back to the same topic where the command was sent.
 
 ## Other Commands
 
@@ -43,4 +43,4 @@ This spawns Claude Code in the background with task tracking, auto forum topic, 
 
 ## Why cc-entry.sh?
 
-The dispatch script creates task tracking files, auto-creates Telegram forum topics, and spawns Claude Code with hooks that report progress back. If you run `claude` directly, none of the tracking or notification infrastructure works.
+The dispatch script creates task tracking files and spawns Claude Code with hooks that report progress, questions, and completion back to the current conversation topic. If you run `claude` directly, none of the tracking or notification infrastructure works.

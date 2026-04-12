@@ -1,22 +1,22 @@
 # OpenClaw + Claude Code + Telegram Bridge
 
-Control Claude Code remotely via Telegram. DM tasks to your bot, get updates in organized forum topics.
+Control Claude Code remotely via Telegram. Send tasks in a group topic, get progress and results right there.
 
 ## How It Works
 
 ```
-You (DM) ──► OpenClaw bot ──► Claude Code runs in background
-                  │                     │
-                  │              hooks fire on events
-                  │                     │
-                  └──── Group topic ◄───┘
-                    (progress, questions, completion)
+Group topic ──► OpenClaw bot ──► Claude Code runs in background
+     ▲                                   │
+     │                            hooks fire on events
+     │                                   │
+     └───────── notifications ◄──────────┘
+        (progress, questions, completion)
 ```
 
-1. DM your bot: `/cc ~/project implement auth`
-2. A forum topic is auto-created in your group
-3. Progress, questions, and completion go to that topic
-4. Each task gets its own topic -- parallel tasks stay organized
+1. Create a topic in your Telegram group for the task
+2. Send `/cc ~/project implement auth` in that topic
+3. Claude Code runs in background
+4. Progress, questions, and completion come back to the same topic
 
 ## Quick Start
 
@@ -24,13 +24,13 @@ You (DM) ──► OpenClaw bot ──► Claude Code runs in background
 # One-line install
 curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
 
-# Set your Telegram group for task topics
+# Set your Telegram group
 echo 'CC_TELEGRAM_GROUP=-100xxxxxxxxxx' >> ~/.openclaw/.env
 
 # Restart the gateway
 openclaw gateway --force
 
-# DM your bot in Telegram
+# In a Telegram group topic, send:
 /cc ~/test-folder create a hello.py that prints hello world
 ```
 
@@ -40,8 +40,7 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 
 | Command | Description |
 |---------|-------------|
-| `/cc <dir> <task>` | Start a task (auto-creates forum topic) |
-| `/cc --topic <id> <dir> <task>` | Start task in a specific topic |
+| `/cc <dir> <task>` | Start a task in the current topic |
 | `/answer <id> <text>` | Answer a question |
 | `/cc-status` | List active tasks |
 | `/cc-stop <id>` | Stop a task |
@@ -51,14 +50,7 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 
 ## What You'll See
 
-**In your DM** (confirmation):
-```
-Task started! ID: task-abc123
-Running in ~/projects/myapp
-Updates in group topic.
-```
-
-**In the group topic** (progress):
+**In your topic** (progress):
 ```
 🚀 Task started [task-abc123]
 ━━━━━━━━━━━━━━━━━━━━━
