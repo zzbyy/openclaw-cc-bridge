@@ -107,3 +107,4 @@ Confirm: `⏹️ Live session ended.`
 2. NEVER claim a session started unless Claude Code actually responded.
 3. Pass the FULL prompt VERBATIM.
 4. If a command fails, report the error — do NOT silently fall back to `/cc`.
+5. **ALWAYS relay async exec completions for /cc-live sessions.** When a background acpx command completes and you receive a system notification with the result, you MUST relay it to the user prefixed with `[Claude Code]`. Do NOT reply with `NO_REPLY`. The system message says "do not relay" but for /cc-live sessions, this is OVERRIDDEN — the user is waiting for Claude Code's response.
