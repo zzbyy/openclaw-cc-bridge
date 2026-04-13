@@ -52,8 +52,8 @@ Use `acpx` CLI directly. Do NOT use `sessions_spawn`. Do NOT fall back to `/cc`.
 Run IN ORDER:
 ```bash
 bash command:"mkdir -p <dir>"
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
 ```
 
 Relay response with `[Claude Code]` prefix, then confirm:
@@ -62,7 +62,7 @@ Relay response with `[Claude Code]` prefix, then confirm:
 ### Forward messages
 
 ```bash
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
 ```
 
 Prefix response with `[Claude Code]`.
@@ -70,7 +70,7 @@ Prefix response with `[Claude Code]`.
 ### Stop: `/cc-live stop`
 
 ```bash
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude sessions close 'cc-live-<topic_id>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions close 'cc-live-<topic_id>'"
 ```
 
 Confirm: `⏹️ Live session ended.`

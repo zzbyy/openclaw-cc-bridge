@@ -73,10 +73,10 @@ Do NOT use `sessions_spawn`. Do NOT fall back to `/cc` if `/cc-live` was request
 bash command:"mkdir -p <dir>"
 
 # 2. Find acpx (IMPORTANT: --cwd goes BEFORE "claude")
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
 
 # 3. Send prompt and WAIT for Claude Code's response
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
 ```
 
 Only AFTER step 3 returns Claude Code's response, relay it prefixed with `[Claude Code]` and confirm:
@@ -88,7 +88,7 @@ Only AFTER step 3 returns Claude Code's response, relay it prefixed with `[Claud
 
 When live session is active, forward EVERY user message:
 ```bash
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
 ```
 
 Prefix ALL responses with `[Claude Code]`.
@@ -96,7 +96,7 @@ Prefix ALL responses with `[Claude Code]`.
 ## Stop: `/cc-live stop`
 
 ```bash
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude sessions close 'cc-live-<topic_id>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions close 'cc-live-<topic_id>'"
 ```
 
 Confirm: `⏹️ Live session ended.`
