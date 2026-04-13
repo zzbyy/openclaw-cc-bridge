@@ -49,8 +49,12 @@ For complex tasks. Opens a persistent Claude Code session in the current topic.
 
 ### Start: `/cc-live <dir> <prompt>`
 
-Use `sessions_spawn` to create a thread-bound ACP session:
+**Step 1:** Create directory if needed:
+```bash
+bash command:"mkdir -p <dir>"
+```
 
+**Step 2:** Try `sessions_spawn` first:
 ```json
 sessions_spawn({
   "task": "<FULL VERBATIM PROMPT>",
@@ -61,14 +65,32 @@ sessions_spawn({
 })
 ```
 
-**Fallback** (if `sessions_spawn` unavailable):
+**Step 3:** If `sessions_spawn` fails, use `acpx` CLI. Run ALL commands:
 ```bash
 ACPX=$(find ~/.nvm -name acpx -path "*/openclaw/node_modules/.bin/*" 2>/dev/null | head -1)
+
+# Create the session
 bash command:"$ACPX claude sessions new --name cc-live-<topic_id>"
+
+# Send the prompt — WAIT for Claude Code's response
 bash command:"$ACPX claude -s cc-live-<topic_id> --cwd '<dir>' '<prompt>'"
 ```
 
-Confirm: `🔴 Live session started in <dir>. Messages in this topic go directly to Claude Code.`
+**Step 4:** Only after Claude Code responds, confirm:
+`🔴 Live session started in <dir>. Messages in this topic go directly to Claude Code.`
+
+Then relay Claude Code's response prefixed with `[Claude Code]`.
+
+**NEVER say "Live session started" without actually running the commands and getting a response.**
+
+### Forward messages
+
+When live session is active and user sends a message:
+```bash
+bash command:"$ACPX claude -s cc-live-<topic_id> '<user message>'"
+```
+
+Prefix response with `[Claude Code]`.
 
 ### Stop: `/cc-live stop`
 
@@ -78,9 +100,3 @@ bash command:"$ACPX claude sessions close cc-live-<topic_id>"
 ```
 
 Confirm: `⏹️ Live session ended.`
-
-### Rules
-
-- Pass the FULL prompt VERBATIM (same as /cc)
-- Once live session is active, forward user messages to the ACP session
-- Prefix Claude Code responses with `[Claude Code]`
