@@ -1,6 +1,6 @@
 ---
 name: cc
-description: 'MANDATORY command router for /cc and cc dispatch. When message starts with /cc or cc followed by a directory path (~/ or /), MUST run cc-entry.sh via bash — never handle the coding task directly. Also handles /answer, /cc-status, /cc-stop, /cc-config commands via dedicated scripts.'
+description: 'MANDATORY command router for /cc (fire-and-forget tasks) and /cc-live (interactive Claude Code sessions). Handles /cc, /cc-live, /cc-live stop, /answer, /cc-status, /cc-stop, /cc-config. When message starts with /cc or cc followed by a directory, run cc-entry.sh. When message starts with /cc-live, start or stop an ACP Claude Code session.'
 metadata:
   {
     "openclaw":
@@ -54,3 +54,56 @@ The ENTIRE text including "Ask me..." goes to Claude Code. You do NOT ask those 
 ## Why cc-entry.sh?
 
 The dispatch script creates task tracking files and spawns Claude Code with hooks that report progress, questions, and completion back to the current conversation topic. If you run `claude` directly, none of the tracking or notification infrastructure works.
+
+---
+
+# /cc-live — Interactive Claude Code Session (ACP)
+
+For complex tasks where the user wants to discuss, plan, and iterate with Claude Code directly.
+
+## Start a live session
+
+When a message starts with `/cc-live ` followed by a directory path:
+
+**Use `sessions_spawn` to create a thread-bound ACP Claude Code session.**
+
+```json
+{
+  "task": "<FULL VERBATIM PROMPT>",
+  "runtime": "acp",
+  "agentId": "claude",
+  "thread": true,
+  "mode": "session"
+}
+```
+
+If `sessions_spawn` is unavailable, fall back to `acpx` CLI:
+```bash
+ACPX=$(find ~/.nvm -name acpx -path "*/openclaw/node_modules/.bin/*" 2>/dev/null | head -1)
+$ACPX claude sessions new --name "cc-live-<topic_id>"
+$ACPX claude -s "cc-live-<topic_id>" --cwd "<dir>" "<prompt>"
+```
+
+After starting, confirm: `🔴 Live session started in <dir>. Messages in this topic go directly to Claude Code.`
+
+Once a live session is active in a topic, all subsequent user messages in that topic should be forwarded to the ACP session — NOT handled by you.
+
+## Stop a live session
+
+When user sends `/cc-live stop`:
+
+Close the ACP session:
+```bash
+$ACPX claude sessions close "cc-live-<topic_id>"
+```
+
+Or if using `sessions_spawn`, use the appropriate session close tool.
+
+Confirm: `⏹️ Live session ended.`
+
+## Key rules
+
+1. `/cc-live` creates an INTERACTIVE session — the user talks directly to Claude Code
+2. Claude Code responses should be prefixed with `[Claude Code]` so the user can tell them apart from your messages
+3. Pass the FULL prompt VERBATIM — same rule as `/cc`
+4. The existing `/cc` (fire-and-forget) continues to work unchanged
