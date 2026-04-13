@@ -1,42 +1,41 @@
 # OpenClaw + Claude Code + Telegram Bridge
 
-Control Claude Code remotely via Telegram. Send tasks in a DM or group topic, get progress and results right there.
+Control Claude Code remotely via Telegram. Two modes: fire-and-forget for simple tasks, live interactive sessions for complex work.
 
-## How It Works
+## Two Modes
+
+### /cc -- Fire and Forget
+Send a task, Claude Code runs in the background, get progress and completion notifications.
+Best for: clear tasks that don't need discussion.
 
 ```
-Telegram (DM or group topic)
-     │
-     ▼
-OpenClaw bot ──► Claude Code runs in background
-     ▲                     │
-     │              hooks fire on events
-     │                     │
-     └── notifications ◄───┘
-   (progress, questions, completion)
+/cc ~/myapp implement JWT auth with login and registration
 ```
 
-**Two modes:**
+### /cc-live -- Interactive Session
+Open a persistent Claude Code session. Discuss, plan, iterate -- Claude Code responds directly in the conversation.
+Best for: complex tasks, planning, code review, anything that needs back-and-forth.
 
-- **`/cc` (fire-and-forget)** -- send a task, Claude Code runs in background, get notifications when done
-- **`/cc-live` (interactive)** -- open a live Claude Code session in a topic, discuss and iterate directly
+```
+/cc-live ~/myapp build a REST API, ask me about the tech stack first
+```
 
-Works in DM or group topics.
+Both work in DM chats or group topics.
 
 ## Quick Start
 
 ```bash
-# One-line install
+# Install
 curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
 
-# Restart the gateway
+# Restart gateway
 openclaw gateway restart
 
-# Send to your bot in Telegram (DM or group topic):
+# Test in Telegram
 /cc ~/test-folder create a hello.py that prints hello world
 ```
 
-See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
+See [WALKTHROUGH.md](WALKTHROUGH.md) for complete setup.
 
 ## Commands
 
@@ -45,21 +44,20 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 | `/cc <dir> <task>` | Fire-and-forget task |
 | `/cc-live <dir> <task>` | Start interactive live session |
 | `/cc-live stop` | End live session |
-| `/answer <id> <text>` | Answer a question (fire-and-forget mode) |
+| `/answer <id> <text>` | Answer a question (/cc mode) |
 | `/cc-status` | List active tasks |
-| `/cc-stop <id>` | Stop a fire-and-forget task |
+| `/cc-stop <id>` | Stop a /cc task |
 | `/cc-config` | Show notification settings |
-| `/cc-config quiet` | Only completion & errors |
-| `/cc-config verbose` | All notifications |
+| `/cc-config quiet\|minimal\|verbose` | Apply preset |
 
-## What You'll See
+## /cc Notifications
 
-**Task started:**
+**Start:**
 ```
 🚀 Task started [task-abc123]
 ━━━━━━━━━━━━━━━━━━━━━
-📁 ~/projects/myapp
-📝 "implement user auth"
+📁 ~/myapp
+📝 "implement JWT auth"
 ━━━━━━━━━━━━━━━━━━━━━
 ```
 
@@ -67,35 +65,23 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 ```
 [CC-PROGRESS] [task-abc123] 📄 Created auth.py
 [CC-PROGRESS] [task-abc123] 📦 pip install bcrypt
-[CC-PROGRESS] [task-abc123] 🧪 Running tests...
 [CC-PROGRESS] [task-abc123] ✓ Ran: python3 test_auth.py (10 steps)
-```
-
-**Question:**
-```
-🤔 Claude Code Question
-━━━━━━━━━━━━━━━━━━━━━
-Should I use JWT or sessions?
-━━━━━━━━━━━━━━━━━━━━━
-Reply: /answer q-xxx <your answer>
 ```
 
 **Completion:**
 ```
 ✅ Task completed [task-abc123]
 ━━━━━━━━━━━━━━━━━━━━━
-📁 ~/projects/myapp
-⏱️ 5m 23s
+📁 ~/myapp
+⏱️ 2m 15s
 
-📄 Files changed (4):
+📄 Files changed (3):
    + auth.py (new)
-   + middleware.py (new)
+   + requirements.txt (new)
    ~ app.py (modified)
-   + tests/test_auth.py (new)
 
 📋 Summary:
-Implemented JWT authentication with login/logout.
-All tests passing.
+Implemented JWT auth with register and login endpoints.
 
 💰 ~10k tokens (est.)
 ━━━━━━━━━━━━━━━━━━━━━
@@ -104,43 +90,66 @@ All tests passing.
 ## /cc-live Example
 
 ```
-You:          /cc-live ~/project build a REST API, ask me what framework to use
-Claw:         🔴 Live session started in ~/project.
-[Claude Code]: What framework? FastAPI, Flask, Django REST, or something else?
+You:           /cc-live ~/myapp build a REST API, ask me about the stack
+Claw:          🔴 Live session started.
 
-You:          FastAPI with SQLite
-[Claude Code]: Got it. Building FastAPI auth API with SQLite...
-              [creates files, runs tests]
-              Done! 3 endpoints: POST /register, POST /login, GET /me
+[Claude Code]  What framework? FastAPI, Flask, Django REST?
+               And database — SQLite, PostgreSQL, MongoDB?
 
-You:          /cc-live stop
-Claw:         ⏹️ Live session ended.
+You:           FastAPI with SQLite
+[Claude Code]  Got it. Building...
+               [creates files, installs deps, runs tests]
+               Done! 3 endpoints: POST /register, POST /login, GET /me
+
+You:           add rate limiting to the login endpoint
+[Claude Code]  Added slowapi rate limiter — 5 attempts per minute per IP.
+
+You:           /cc-live stop
+Claw:          ⏹️ Live session ended.
+```
+
+## Architecture
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Telegram (DM or group topic)                                │
+│                                                              │
+│  /cc mode:      send task → get notifications back           │
+│  /cc-live mode: open live session → talk to Claude Code      │
+└───────────────────────┬──────────────────────────────────────┘
+                        │
+                        ▼
+┌──────────────────────────────────────────────────────────────┐
+│  OpenClaw Gateway                                            │
+│                                                              │
+│  /cc      → cc skill → dispatch.sh → Claude Code (-p mode)  │
+│              hooks send notifications back to topic           │
+│                                                              │
+│  /cc-live → cc skill → acpx CLI → Claude Code (ACP session) │
+│              responses flow directly through conversation     │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## Files
 
 ```
-~/.agents/skills/cc/ # The skill (SKILL.md, CLAUDE.md, scripts/)
+~/.agents/skills/cc/         # Skill (SKILL.md, CLAUDE.md, scripts/)
 
 ~/.openclaw/
-├── openclaw.json            # OpenClaw config (gateway token, telegram, etc.)
-├── .env                     # Optional overrides (CC_TELEGRAM_GROUP, etc.)
-└── cc-bridge/               # Bridge data
+├── openclaw.json            # Gateway token, Telegram config
+├── .env                     # CC_TELEGRAM_GROUP, optional overrides
+└── cc-bridge/               # /cc mode bridge data
     ├── config.json          # Notification settings
-    ├── tasks/               # Active tasks
-    ├── questions/           # Pending questions
+    ├── tasks/               # Active task files
     └── logs/                # Hook logs
 
 ~/.claude/
-├── settings.json            # Claude Code settings (hooks registered here)
-└── hooks/                   # Hook scripts
-    ├── hook-utils.sh        # Shared utilities (sourced by all hooks)
-    ├── session-start.sh     # Task started notification
-    ├── post-tool-use.sh     # Progress tracking (files, commands, tests)
-    ├── post-tool-use-failure.sh  # Error tracking
-    ├── notification.sh      # Idle/permission notifications
-    ├── elicitation.sh       # Question forwarding (blocking)
-    ├── stop.sh              # Milestone progress pings
+├── settings.json            # Hook registrations
+└── hooks/                   # /cc mode hook scripts
+    ├── hook-utils.sh        # Shared utilities
+    ├── session-start.sh     # Start notification
+    ├── post-tool-use.sh     # Progress tracking
+    ├── elicitation.sh       # Question forwarding
     └── session-end.sh       # Completion summary
 ```
 
@@ -152,28 +161,30 @@ openclaw status
 openclaw gateway restart
 ```
 
-**Hooks not firing?**
+**Hooks not firing? (/cc mode)**
 ```bash
-jq '.hooks' ~/.claude/settings.json
+jq '.hooks | keys' ~/.claude/settings.json
 ls -la ~/.claude/hooks/
-```
-
-**Questions timing out?**
-```bash
-echo 'CC_ELICITATION_TIMEOUT=600' >> ~/.openclaw/.env
 tail -f ~/.openclaw/cc-bridge/logs/hooks.log
 ```
 
-## Updating
+**Permission denied on hooks?**
+```bash
+chmod +x ~/.claude/hooks/*.sh
+chmod +x ~/.agents/skills/cc/scripts/*.sh
+```
 
-Re-run the installer -- it's idempotent (replaces old bridge hooks, preserves your other hooks):
+## Updating
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/zzbyy/openclaw-cc-bridge/main/remote-install.sh | bash
 ```
 
+Idempotent -- replaces old hooks, preserves your other hooks.
+
 ## Security
 
-- Tasks use `--dangerously-skip-permissions` -- dispatch only trusted tasks
+- `/cc` uses `--dangerously-skip-permissions` -- dispatch only trusted tasks
+- `/cc-live` uses `--approve-all` -- auto-approves all permission requests
 - Gateway token is read from `openclaw.json` -- keep it secret
 - Gateway runs on localhost only by default
