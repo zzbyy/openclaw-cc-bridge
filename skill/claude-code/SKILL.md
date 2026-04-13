@@ -19,22 +19,26 @@ When a message starts with `/cc ` or `cc ` followed by a path (`~/...` or `/...`
 
 **You MUST run cc-entry.sh. You MUST NOT do the coding work yourself.**
 
+**Pass the ENTIRE user text after the directory as the prompt — VERBATIM, UNMODIFIED.**
+Do NOT interpret, rephrase, summarize, split, or act on any part of the prompt.
+The full text is for Claude Code, not for you.
+
 **If the conversation metadata contains `topic_id`, you MUST pass it as `--topic`** so notifications go back to this topic.
 
 ```bash
 # With topic_id from metadata:
-~/.agents/skills/cc/scripts/cc-entry.sh --topic <topic_id> <dir> <task>
+~/.agents/skills/cc/scripts/cc-entry.sh --topic <topic_id> <dir> "<FULL VERBATIM PROMPT>"
 
 # Without topic_id:
-~/.agents/skills/cc/scripts/cc-entry.sh <dir> <task>
+~/.agents/skills/cc/scripts/cc-entry.sh <dir> "<FULL VERBATIM PROMPT>"
 ```
 
-Example — user sends `/cc ~/myapp implement auth` in topic 50:
+Example — user sends `/cc ~/myapp build an API server. Ask me what framework to use before writing code.` in topic 50:
 ```bash
-~/.agents/skills/cc/scripts/cc-entry.sh --topic 50 ~/myapp implement auth
+~/.agents/skills/cc/scripts/cc-entry.sh --topic 50 ~/myapp "build an API server. Ask me what framework to use before writing code."
 ```
 
-This spawns Claude Code in the background with task tracking and progress notifications sent back to this topic.
+The ENTIRE text including "Ask me..." goes to Claude Code. You do NOT ask those questions yourself.
 
 ## Other Commands
 
