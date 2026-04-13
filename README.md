@@ -39,16 +39,23 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete setup.
 
 ## Commands
 
+**Fire-and-forget (`/cc`):**
+
 | Command | Description |
 |---------|-------------|
-| `/cc <dir> <task>` | Fire-and-forget task |
-| `/cc-live <dir> <task>` | Start interactive live session |
-| `/cc-live stop` | End live session |
-| `/answer <id> <text>` | Answer a question (/cc mode) |
+| `/cc <dir> <task>` | Dispatch a task |
 | `/cc-status` | List active tasks |
-| `/cc-stop <id>` | Stop a /cc task |
-| `/cc-config` | Show notification settings |
-| `/cc-config quiet\|minimal\|verbose` | Apply preset |
+| `/cc-stop <id>` | Stop a running task |
+| `/answer <id> <text>` | Answer a Claude Code question |
+| `/cc-config quiet\|minimal\|verbose` | Notification preset |
+
+**Interactive (`/cc-live`):**
+
+| Command | Description |
+|---------|-------------|
+| `/cc-live <dir> <task>` | Start live session |
+| `/cc-live stop` | End live session |
+| *(just type normally)* | Messages go to Claude Code |
 
 ## /cc Notifications
 

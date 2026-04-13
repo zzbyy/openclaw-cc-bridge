@@ -105,25 +105,23 @@ End with:
 | `/cc` | Simple, well-defined tasks | Fire-and-forget. Notifications come back when done. |
 | `/cc-live` | Complex tasks, planning, review | Interactive session. You talk directly to Claude Code. |
 
-### Commands
+### /cc Commands (fire-and-forget)
 
 | Command | Description |
 |---------|-------------|
-| `/cc <dir> <task>` | Fire-and-forget task |
-| `/cc-live <dir> <task>` | Start interactive live session |
-| `/cc-live stop` | End live session |
-| `/answer <id> <text>` | Answer a question (/cc mode) |
+| `/cc <dir> <task>` | Dispatch a task |
 | `/cc-status` | List active tasks |
-| `/cc-stop <id>` | Stop a /cc task |
+| `/cc-stop <id>` | Stop a running task |
+| `/answer <id> <text>` | Answer a Claude Code question |
 | `/cc-config quiet\|minimal\|verbose` | Notification preset |
 
-### /cc Notification Presets
+### /cc-live Commands (interactive)
 
-```
-/cc-config quiet      -- Only completion + errors
-/cc-config minimal    -- Start + completion + errors
-/cc-config verbose    -- Everything (default)
-```
+| Command | Description |
+|---------|-------------|
+| `/cc-live <dir> <task>` | Start live session |
+| `/cc-live stop` | End live session |
+| *(just type normally)* | Messages go to Claude Code |
 
 ---
 
