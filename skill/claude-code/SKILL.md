@@ -63,67 +63,47 @@ For complex tasks where the user wants to discuss, plan, and iterate with Claude
 
 ## Start a live session
 
-When a message starts with `/cc-live ` followed by a directory path:
+When a message starts with `/cc-live ` followed by a directory path, use `acpx` CLI directly.
+Do NOT use `sessions_spawn`. Do NOT fall back to `/cc` if `/cc-live` was requested.
 
-**Step 1: Create the directory if it doesn't exist.**
-
-**Step 2: Use `sessions_spawn` to create a thread-bound ACP Claude Code session.**
-
-You MUST include `agentId`:
-
-```json
-sessions_spawn({
-  "task": "<FULL VERBATIM PROMPT>",
-  "runtime": "acp",
-  "agentId": "claude",
-  "thread": true,
-  "mode": "session"
-})
-```
-
-**Step 3: If `sessions_spawn` fails, use `acpx` CLI as fallback.**
-
-You MUST run ALL of these commands — do NOT skip any or claim success without running them:
+**Run these exec commands IN ORDER. Do NOT skip any.**
 
 ```bash
-# Find acpx
-ACPX=$(find ~/.nvm -name acpx -path "*/openclaw/node_modules/.bin/*" 2>/dev/null | head -1)
+# 1. Create directory
+bash command:"mkdir -p <dir>"
 
-# Create session (--cwd is a TOP-LEVEL acpx flag, NOT a claude subcommand flag)
-$ACPX --cwd "<dir>" claude sessions new --name "cc-live-<topic_id>"
+# 2. Find acpx (IMPORTANT: --cwd goes BEFORE "claude")
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
 
-# Send the initial prompt (this is what starts Claude Code working)
-$ACPX --cwd "<dir>" claude -s "cc-live-<topic_id>" "<prompt>"
+# 3. Send prompt and WAIT for Claude Code's response
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
 ```
 
-**Step 4: Only AFTER Claude Code responds**, confirm:
-`🔴 Live session started in <dir>. Messages in this topic go directly to Claude Code.`
+Only AFTER step 3 returns Claude Code's response, relay it prefixed with `[Claude Code]` and confirm:
+`🔴 Live session started in <dir>. Messages in this topic now go to Claude Code.`
 
-**Do NOT say "Live session started" until you have confirmed Claude Code is actually running and responded.**
+**NEVER say "started" without Claude Code actually responding. NEVER fall back to /cc.**
 
-## Forward messages in a live session
+## Forward messages
 
-Once a live session is active, forward user messages to the ACP session:
+When live session is active, forward EVERY user message:
 ```bash
-$ACPX claude -s "cc-live-<topic_id>" "<user message>"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
 ```
 
-Prefix Claude Code responses with `[Claude Code]`.
+Prefix ALL responses with `[Claude Code]`.
 
-## Stop a live session
-
-When user sends `/cc-live stop`:
+## Stop: `/cc-live stop`
 
 ```bash
-ACPX=$(find ~/.nvm -name acpx -path "*/openclaw/node_modules/.bin/*" 2>/dev/null | head -1)
-$ACPX claude sessions close "cc-live-<topic_id>"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --cwd '<dir>' claude sessions close 'cc-live-<topic_id>'"
 ```
 
 Confirm: `⏹️ Live session ended.`
 
 ## Key rules
 
-1. `/cc-live` creates an INTERACTIVE session — the user talks directly to Claude Code
-2. NEVER claim a session started unless Claude Code actually responded
-3. Pass the FULL prompt VERBATIM — same rule as `/cc`
-4. The existing `/cc` (fire-and-forget) continues to work unchanged
+1. `/cc-live` = interactive ACP session. `/cc` = fire-and-forget. NEVER mix them.
+2. NEVER claim a session started unless Claude Code actually responded.
+3. Pass the FULL prompt VERBATIM.
+4. If a command fails, report the error — do NOT silently fall back to `/cc`.
