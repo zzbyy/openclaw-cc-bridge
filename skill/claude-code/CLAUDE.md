@@ -69,11 +69,11 @@ sessions_spawn({
 ```bash
 ACPX=$(find ~/.nvm -name acpx -path "*/openclaw/node_modules/.bin/*" 2>/dev/null | head -1)
 
-# Create the session
-bash command:"$ACPX claude sessions new --name cc-live-<topic_id>"
+# Create the session (--cwd is a TOP-LEVEL acpx flag)
+bash command:"$ACPX --cwd '<dir>' claude sessions new --name cc-live-<topic_id>"
 
 # Send the prompt — WAIT for Claude Code's response
-bash command:"$ACPX claude -s cc-live-<topic_id> --cwd '<dir>' '<prompt>'"
+bash command:"$ACPX --cwd '<dir>' claude -s cc-live-<topic_id> '<prompt>'"
 ```
 
 **Step 4:** Only after Claude Code responds, confirm:

@@ -89,11 +89,11 @@ You MUST run ALL of these commands — do NOT skip any or claim success without 
 # Find acpx
 ACPX=$(find ~/.nvm -name acpx -path "*/openclaw/node_modules/.bin/*" 2>/dev/null | head -1)
 
-# Create session
-$ACPX claude sessions new --name "cc-live-<topic_id>"
+# Create session (--cwd is a TOP-LEVEL acpx flag, NOT a claude subcommand flag)
+$ACPX --cwd "<dir>" claude sessions new --name "cc-live-<topic_id>"
 
 # Send the initial prompt (this is what starts Claude Code working)
-$ACPX claude -s "cc-live-<topic_id>" --cwd "<dir>" "<prompt>"
+$ACPX --cwd "<dir>" claude -s "cc-live-<topic_id>" "<prompt>"
 ```
 
 **Step 4: Only AFTER Claude Code responds**, confirm:
