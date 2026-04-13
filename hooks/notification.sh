@@ -18,8 +18,10 @@ TASK_FILE=$(find_task_by_session "$SESSION_ID") || true
 TASK_ID=""
 [ -n "$TASK_FILE" ] && TASK_ID=$(get_task_id "$TASK_FILE")
 
-TASK_LABEL=""
-[ -n "$TASK_ID" ] && TASK_LABEL="[$TASK_ID] "
+# Only send notifications for bridge-tracked tasks (skip non-bridge Claude Code sessions)
+[ -z "$TASK_ID" ] && { log_hook "Notification: type=$NOTIFICATION_TYPE task= (skipped, no bridge task)"; exit 0; }
+
+TASK_LABEL="[$TASK_ID] "
 
 # Handle based on type
 case "$NOTIFICATION_TYPE" in
