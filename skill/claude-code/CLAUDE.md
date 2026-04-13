@@ -53,7 +53,7 @@ Run IN ORDER:
 ```bash
 bash command:"mkdir -p <dir>"
 bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
+bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
 ```
 
 Relay response with `[Claude Code]` prefix, then confirm:
@@ -62,7 +62,7 @@ Relay response with `[Claude Code]` prefix, then confirm:
 ### Forward messages
 
 ```bash
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
+bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
 ```
 
 Prefix response with `[Claude Code]`.

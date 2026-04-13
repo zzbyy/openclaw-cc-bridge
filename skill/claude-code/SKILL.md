@@ -72,11 +72,11 @@ Do NOT use `sessions_spawn`. Do NOT fall back to `/cc` if `/cc-live` was request
 # 1. Create directory
 bash command:"mkdir -p <dir>"
 
-# 2. Find acpx (IMPORTANT: --cwd goes BEFORE "claude")
+# 2. Create session (IMPORTANT: --cwd goes BEFORE "claude")
 bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
 
-# 3. Send prompt and WAIT for Claude Code's response
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
+# 3. Send prompt — use timeout:300 so Claude Code has time to respond without exec timing out
+bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
 ```
 
 Only AFTER step 3 returns Claude Code's response, relay it prefixed with `[Claude Code]` and confirm:
@@ -86,9 +86,9 @@ Only AFTER step 3 returns Claude Code's response, relay it prefixed with `[Claud
 
 ## Forward messages
 
-When live session is active, forward EVERY user message:
+When live session is active, forward EVERY user message (timeout:300 to avoid async polling):
 ```bash
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
+bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
 ```
 
 Prefix ALL responses with `[Claude Code]`.
