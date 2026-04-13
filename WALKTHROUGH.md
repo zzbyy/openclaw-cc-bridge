@@ -208,14 +208,21 @@ Create a topic, then send the same command in that topic.
 
 | Command | Description |
 |---------|-------------|
-| `/cc <dir> <task>` | Start a task |
-| `/answer <id> <text>` | Answer a question |
+| `/cc <dir> <task>` | Fire-and-forget task |
+| `/cc-live <dir> <task>` | Start interactive live session |
+| `/cc-live stop` | End live session |
+| `/answer <id> <text>` | Answer a question (fire-and-forget mode) |
 | `/cc-status` | List active tasks |
 | `/cc-status <id>` | Get task details |
-| `/cc-stop <id>` | Stop a task |
+| `/cc-stop <id>` | Stop a fire-and-forget task |
 | `/cc-config` | Show notification settings |
 | `/cc-config quiet\|minimal\|verbose` | Apply preset |
 | `/cc-config set <key> <on\|off>` | Toggle a setting |
+
+### When to use which
+
+- **`/cc`** -- simple, well-defined tasks Claude Code can handle without questions
+- **`/cc-live`** -- complex tasks where you want to discuss, plan, review, or iterate with Claude Code
 
 ---
 

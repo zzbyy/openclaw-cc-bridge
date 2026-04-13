@@ -16,13 +16,12 @@ OpenClaw bot ──► Claude Code runs in background
    (progress, questions, completion)
 ```
 
-1. Send `/cc ~/project implement auth` to your bot (DM or group topic)
-2. Claude Code runs in background
-3. Progress, questions, and completion come back to the same conversation
+**Two modes:**
 
-**Two ways to use it:**
-- **DM chat** -- message the bot directly, notifications come back in the DM
-- **Group topic** -- send in a forum topic, notifications come back to that topic (great for organizing parallel tasks)
+- **`/cc` (fire-and-forget)** -- send a task, Claude Code runs in background, get notifications when done
+- **`/cc-live` (interactive)** -- open a live Claude Code session in a topic, discuss and iterate directly
+
+Works in DM or group topics.
 
 ## Quick Start
 
@@ -43,10 +42,12 @@ See [WALKTHROUGH.md](WALKTHROUGH.md) for complete step-by-step setup.
 
 | Command | Description |
 |---------|-------------|
-| `/cc <dir> <task>` | Start a task |
-| `/answer <id> <text>` | Answer a question |
+| `/cc <dir> <task>` | Fire-and-forget task |
+| `/cc-live <dir> <task>` | Start interactive live session |
+| `/cc-live stop` | End live session |
+| `/answer <id> <text>` | Answer a question (fire-and-forget mode) |
 | `/cc-status` | List active tasks |
-| `/cc-stop <id>` | Stop a task |
+| `/cc-stop <id>` | Stop a fire-and-forget task |
 | `/cc-config` | Show notification settings |
 | `/cc-config quiet` | Only completion & errors |
 | `/cc-config verbose` | All notifications |
@@ -98,6 +99,22 @@ All tests passing.
 
 💰 ~10k tokens (est.)
 ━━━━━━━━━━━━━━━━━━━━━
+```
+
+## /cc-live Example
+
+```
+You:          /cc-live ~/project build a REST API, ask me what framework to use
+Claw:         🔴 Live session started in ~/project.
+[Claude Code]: What framework? FastAPI, Flask, Django REST, or something else?
+
+You:          FastAPI with SQLite
+[Claude Code]: Got it. Building FastAPI auth API with SQLite...
+              [creates files, runs tests]
+              Done! 3 endpoints: POST /register, POST /login, GET /me
+
+You:          /cc-live stop
+Claw:         ⏹️ Live session ended.
 ```
 
 ## Files
