@@ -15,7 +15,7 @@ TOOL_INPUT=$(echo "$INPUT" | jq -r '.tool_input // {}')
 TOOL_OUTPUT=$(echo "$INPUT" | jq -r '.tool_response // ""' | head -c 500)
 
 # Find task
-TASK_FILE=$(find_task_by_session "$SESSION_ID")
+TASK_FILE=$(find_task_by_session "$SESSION_ID") || true
 [ -z "$TASK_FILE" ] && exit 0
 
 TASK_ID=$(get_task_id "$TASK_FILE")

@@ -14,7 +14,7 @@ MESSAGE=$(echo "$INPUT" | jq -r '.message // ""')
 NOTIFICATION_TYPE=$(echo "$INPUT" | jq -r '.notification_type // "unknown"')
 
 # Find task
-TASK_FILE=$(find_task_by_session "$SESSION_ID")
+TASK_FILE=$(find_task_by_session "$SESSION_ID") || true
 TASK_ID=""
 [ -n "$TASK_FILE" ] && TASK_ID=$(get_task_id "$TASK_FILE")
 

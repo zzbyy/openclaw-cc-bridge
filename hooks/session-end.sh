@@ -15,7 +15,7 @@ REASON=$(echo "$INPUT" | jq -r '.reason // "unknown"')
 TRANSCRIPT_PATH=$(echo "$INPUT" | jq -r '.transcript_path // ""')
 
 # Find task
-TASK_FILE=$(find_task_by_session "$SESSION_ID")
+TASK_FILE=$(find_task_by_session "$SESSION_ID") || true
 if [ -z "$TASK_FILE" ]; then
     log_hook "SessionEnd: no task found for session=$SESSION_ID"
     exit 0

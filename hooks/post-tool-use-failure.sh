@@ -14,7 +14,7 @@ TOOL_NAME=$(echo "$INPUT" | jq -r '.tool_name // ""')
 ERROR=$(echo "$INPUT" | jq -r '.error // ""' | head -c 300)
 
 # Find task
-TASK_FILE=$(find_task_by_session "$SESSION_ID")
+TASK_FILE=$(find_task_by_session "$SESSION_ID") || true
 [ -z "$TASK_FILE" ] && exit 0
 
 TASK_ID=$(get_task_id "$TASK_FILE")

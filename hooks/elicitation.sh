@@ -19,7 +19,7 @@ MESSAGE=$(echo "$INPUT" | jq -r '.message // ""')
 ELICITATION_ID=$(echo "$INPUT" | jq -r '.elicitation_id // ""')
 
 # Find task
-TASK_FILE=$(find_task_by_session "$SESSION_ID")
+TASK_FILE=$(find_task_by_session "$SESSION_ID") || true
 TASK_ID=""
 [ -n "$TASK_FILE" ] && TASK_ID=$(get_task_id "$TASK_FILE")
 

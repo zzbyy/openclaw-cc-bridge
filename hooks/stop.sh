@@ -18,7 +18,7 @@ fi
 SESSION_ID=$(echo "$INPUT" | jq -r '.session_id // "unknown"')
 
 # Find task
-TASK_FILE=$(find_task_by_session "$SESSION_ID")
+TASK_FILE=$(find_task_by_session "$SESSION_ID") || true
 [ -z "$TASK_FILE" ] && exit 0
 
 TASK_ID=$(get_task_id "$TASK_FILE")
