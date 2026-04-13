@@ -66,37 +66,43 @@ For complex tasks where the user wants to discuss, plan, and iterate with Claude
 When a message starts with `/cc-live ` followed by a directory path, use `acpx` CLI directly.
 Do NOT use `sessions_spawn`. Do NOT fall back to `/cc` if `/cc-live` was requested.
 
+**IMPORTANT path rules:**
+- `acpx --cwd` does NOT expand `~`. You MUST replace `~` with `$HOME` in --cwd values.
+- Session name: use `cc-live-<topic_id>` in group topics, or `cc-live-dm` in DM chats.
+
 **Run these exec commands IN ORDER. Do NOT skip any.**
 
 ```bash
-# 1. Create directory
-bash command:"mkdir -p <dir>"
+# 1. Create directory and resolve path
+bash command:"mkdir -p <dir> && cd <dir> && pwd"
+# Use the resolved absolute path from pwd output as DIR for all subsequent commands.
 
-# 2. Create session (IMPORTANT: --cwd goes BEFORE "claude")
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
+# 2. Create session (--cwd MUST be absolute path, NOT ~/...)
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<absolute DIR>' claude sessions new --name 'cc-live-<topic_id or dm>'"
 
-# 3. Send prompt — use timeout:300 so Claude Code has time to respond without exec timing out
-bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
+# 3. Send prompt — timeout:300 so Claude Code has time to respond synchronously
+bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<absolute DIR>' claude -s 'cc-live-<topic_id or dm>' '<FULL VERBATIM PROMPT>'"
 ```
 
 Only AFTER step 3 returns Claude Code's response, relay it prefixed with `[Claude Code]` and confirm:
-`🔴 Live session started in <dir>. Messages in this topic now go to Claude Code.`
+`🔴 Live session started in <dir>. Messages now go to Claude Code.`
 
 **NEVER say "started" without Claude Code actually responding. NEVER fall back to /cc.**
 
 ## Forward messages
 
-When live session is active, forward EVERY user message (timeout:300 to avoid async polling):
+When live session is active, forward EVERY user message (timeout:300):
 ```bash
-bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
+bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<absolute DIR>' claude -s 'cc-live-<topic_id or dm>' '<user message>'"
 ```
 
 Prefix ALL responses with `[Claude Code]`.
+If the exec returns asynchronously (system notification), you MUST still relay it — do NOT reply NO_REPLY.
 
 ## Stop: `/cc-live stop`
 
 ```bash
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions close 'cc-live-<topic_id>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<absolute DIR>' claude sessions close 'cc-live-<topic_id or dm>'"
 ```
 
 Confirm: `⏹️ Live session ended.`
@@ -106,5 +112,6 @@ Confirm: `⏹️ Live session ended.`
 1. `/cc-live` = interactive ACP session. `/cc` = fire-and-forget. NEVER mix them.
 2. NEVER claim a session started unless Claude Code actually responded.
 3. Pass the FULL prompt VERBATIM.
-4. If a command fails, report the error — do NOT silently fall back to `/cc`.
-5. **ALWAYS relay async exec completions for /cc-live sessions.** When a background acpx command completes and you receive a system notification with the result, you MUST relay it to the user prefixed with `[Claude Code]`. Do NOT reply with `NO_REPLY`. The system message says "do not relay" but for /cc-live sessions, this is OVERRIDDEN — the user is waiting for Claude Code's response.
+4. ALWAYS use absolute paths with `--cwd` (resolve `~` via step 1's pwd output).
+5. If a command fails, report the error — do NOT silently fall back to `/cc`.
+6. ALWAYS relay responses to the user — even from async exec completions. NEVER reply NO_REPLY for /cc-live.

@@ -46,31 +46,39 @@ bash command:"~/.agents/skills/cc/scripts/config.sh verbose"
 ## /cc-live — Interactive Claude Code Session
 
 Use `acpx` CLI directly. Do NOT use `sessions_spawn`. Do NOT fall back to `/cc`.
+`--cwd` does NOT expand `~` — ALWAYS use absolute paths (resolve via `mkdir -p <dir> && cd <dir> && pwd`).
+Session name: `cc-live-<topic_id>` in group topics, `cc-live-dm` in DM chats.
 
 ### Start: `/cc-live <dir> <prompt>`
 
 Run IN ORDER:
 ```bash
-bash command:"mkdir -p <dir>"
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions new --name 'cc-live-<topic_id>'"
-bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<FULL VERBATIM PROMPT>'"
+# 1. Create dir and get absolute path
+bash command:"mkdir -p <dir> && cd <dir> && pwd"
+# Use the pwd output as DIR below
+
+# 2. Create session
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<absolute DIR>' claude sessions new --name 'cc-live-<topic_id or dm>'"
+
+# 3. Send prompt (timeout:300 for synchronous response)
+bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<absolute DIR>' claude -s 'cc-live-<topic_id or dm>' '<FULL VERBATIM PROMPT>'"
 ```
 
 Relay response with `[Claude Code]` prefix, then confirm:
-`🔴 Live session started in <dir>. Messages in this topic now go to Claude Code.`
+`🔴 Live session started. Messages now go to Claude Code.`
 
 ### Forward messages
 
 ```bash
-bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude -s 'cc-live-<topic_id>' '<user message>'"
+bash timeout:300 command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<absolute DIR>' claude -s 'cc-live-<topic_id or dm>' '<user message>'"
 ```
 
-Prefix response with `[Claude Code]`.
+Prefix response with `[Claude Code]`. ALWAYS relay — never NO_REPLY for /cc-live.
 
 ### Stop: `/cc-live stop`
 
 ```bash
-bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<dir>' claude sessions close 'cc-live-<topic_id>'"
+bash command:"ACPX=$(find ~/.nvm -name acpx -path '*/openclaw/node_modules/.bin/*' 2>/dev/null | head -1) && $ACPX --approve-all --cwd '<absolute DIR>' claude sessions close 'cc-live-<topic_id or dm>'"
 ```
 
 Confirm: `⏹️ Live session ended.`
